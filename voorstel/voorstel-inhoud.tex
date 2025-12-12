@@ -15,70 +15,107 @@
 \section{Inleiding}%
 \label{sec:inleiding}
 
-Waarover zal je bachelorproef gaan? Introduceer het thema en zorg dat volgende zaken zeker duidelijk aanwezig zijn:
-
-\begin{itemize}
-  \item kaderen thema
-  \item de doelgroep
-  \item de probleemstelling en (centrale) onderzoeksvraag
-  \item de onderzoeksdoelstelling
-\end{itemize}
-
-Denk er aan: een typische bachelorproef is \textit{toegepast onderzoek}, wat betekent dat je start vanuit een concrete probleemsituatie in bedrijfscontext, een \textbf{casus}. Het is belangrijk om je onderwerp goed af te bakenen: je gaat voor die \textit{ene specifieke probleemsituatie} op zoek naar een goede oplossing, op basis van de huidige kennis in het vakgebied.
-
-De doelgroep moet ook concreet en duidelijk zijn, dus geen algemene of vaag gedefinieerde groepen zoals \emph{bedrijven}, \emph{developers}, \emph{Vlamingen}, enz. Je richt je in elk geval op it-professionals, een bachelorproef is geen populariserende tekst. Eén specifiek bedrijf (die te maken hebben met een concrete probleemsituatie) is dus beter dan \emph{bedrijven} in het algemeen.
-
-Formuleer duidelijk de onderzoeksvraag! De begeleiders lezen nog steeds te veel voorstellen waarin we geen onderzoeksvraag terugvinden.
-
-Schrijf ook iets over de doelstelling. Wat zie je als het concrete eindresultaat van je onderzoek, naast de uitgeschreven scriptie? Is het een proof-of-concept, een rapport met aanbevelingen, \ldots Met welk eindresultaat kan je je bachelorproef als een succes beschouwen?
+De afgelopen jaren is de complexiteit en de frequentie van aanvallen op webapplicaties en Application Programming Interfaces (API's) sterk toegenomen. Binnen Evolane wordt web- en API-verkeer gemonitord en beveiligd door Akamai App & API protector en een Security Information and Event Management platform. Doordat cyberaanvallen steeds complexer worden en eveneens gebruik maken van automatisatie wordt het steeds moeilijker om afwijkend gedrag in web- en API- verkeer tijdig te detecteren met klassieke rule-based detectiemechanismen. Deze aanpak leidt tot een verhoogde werkdruk en aantal false positives binnen het Security Operations Team. Om deze problematiek aan te pakken ontstaat de nood aan een aanvullende analysemethode die in staat is om afwijkend gedrag automatisch te herkennen op basis van gedragsafwijkingen in grote hoeveelheden log- en event data, waarbij wordt onderzocht welke kenmerken in Akamai access logs en SIEM-data kunnen wijzen op afwijkend of verdacht gedrag. Deze bachelorproef onderzoekt hoe machine learning kan worden ingezet om anomalieën in web- en API-verkeer te detecteren op basis van Akamai access logs en SIEM-data,en welke machine-learningmethodes hiervoor geschikt zijn binnen een SOC-context. Het onderzoek richt zich op het ontwikkelen van een proof-of-concept dat Evolane kan ondersteunen bij het verbeteren van hun detectie en het verminderen van false positives.  
 
 %---------- Stand van zaken ---------------------------------------------------
 
 \section{Literatuurstudie}%
 \label{sec:literatuurstudie}
 
-Hier beschrijf je de \emph{state-of-the-art} rondom je gekozen onderzoeksdomein, d.w.z.\ een inleidende, doorlopende tekst over het onderzoeksdomein van je bachelorproef. Je steunt daarbij heel sterk op de professionele \emph{vakliteratuur}, en niet zozeer op populariserende teksten voor een breed publiek. Wat is de huidige stand van zaken in dit domein, en wat zijn nog eventuele open vragen (die misschien de aanleiding waren tot je onderzoeksvraag!)?
+\subsection{Web- en API-beveiliging: context en uitdagingen}
 
-Je mag de titel van deze sectie ook aanpassen (literatuurstudie, stand van zaken, enz.). Zijn er al gelijkaardige onderzoeken gevoerd? Wat concluderen ze? Wat is het verschil met jouw onderzoek?
+De afgelopen jaren is de complexiteit van web en API-aanvallen sterk toegenomen. De OWASP API security top 10 benadrukt dat API aanvallen vaak het gevolg zijn van gebrek aan autorisatie, onvoldoende controle op resourcegebruik en misbruik van businesslogica, wat het detecteren van een aanval aanzienlijk complexer maakt \textcite{OWASP2023} Rapporten van Akamai tonen aan dat er in 2024 een toename is van 33 procent in aanvallen gericht op web applicaties en API. Deze stijging wordt in verband gebracht met de toename van cloudgebaseerde architecturen, microservices en AI gedreven applicaties.
+Daarnaast wordt er een sterke automatisering van aanvallen waargenomen, waar bots gedreven door AI en geautomatiseerde scripts worden ingezet voor onder andere denial of service, credential stuffing en API misbruik \autocite{Akamai2025}. Dit maakt het ontzettend moeilijk voor deze aanvallen te onderscheiden van normaal API verkeer aangezien deze aanvallen vaak gebruikmaken van geldige requests die zich kunnen aanpassen aan de beveiligingsmaatregelen. Het gevolg hiervan is dat klassieke rulebased beveiligingsmechanismen, die steunen op vooraf gedefinieerde signatures en patronen steeds meer beperkingen ondervinden in het detecteren van nieuwe dreigingen \autocite{Standards2007}.
 
-Verwijs bij elke introductie van een term of bewering over het domein naar de vakliteratuur, bijvoorbeeld~\autocite{Hykes2013}! Denk zeker goed na welke werken je refereert en waarom.
 
-Draag zorg voor correcte literatuurverwijzingen! Een bronvermelding hoort thuis \emph{binnen} de zin waar je je op die bron baseert, dus niet er buiten! Maak meteen een verwijzing als je gebruik maakt van een bron. Doe dit dus \emph{niet} aan het einde van een lange paragraaf. Baseer nooit teveel aansluitende tekst op eenzelfde bron.
+\subsection{Anomaly detection en threat intelligence binnen Security Operations}
 
-Als je informatie over bronnen verzamelt in JabRef, zorg er dan voor dat alle nodige info aanwezig is om de bron terug te vinden (zoals uitvoerig besproken in de lessen Research Methods).
+NIST wijst erop dat organisaties vaak geconfronteerd worden met grote hoeveelheden heterogene logdata en beperkte middelen voor analyse, wat het correleren en interpreteren van security-events bemoeilijkt binnen een SOC-context \Autocite{Kent2006}. In de omgeving van Evolane wordt Web en API-verkeer reeds actief beschermt en geanalyseerd door Akamai APP en API protector in combinatie met een SIEM, hoewel deze oplossingen effectieve detectie- en preventiemechanismen bieden is er binnen de context van het security operations team nog steeds nood aan een aanvullende analyse toepassing die abnormaal gedrag detecteert, false positives vermindert en real time correlaties kan leggen tussen security events. In literatuur wordt de fusie van machine-learning gedreven anomaliedetectie met traditionelere intrusion detection systemen beschreven als een waardevolle aanvulling, omdat dergelijke systemen die gebruikmaken van machine learning grote hoeveelheden netwerk en log data kunnen analyseren terwijl de afhankelijkheid van vastgestelde regels en signatures wordt verminderd \Autocite{Kumar_2025}.
 
-% Voor literatuurverwijzingen zijn er twee belangrijke commando's:
-% \autocite{KEY} => (Auteur, jaartal) Gebruik dit als de naam van de auteur
-%   geen onderdeel is van de zin.
-% \textcite{KEY} => Auteur (jaartal)  Gebruik dit als de auteursnaam wel een
-%   functie heeft in de zin (bv. ``Uit onderzoek door Doll & Hill (1954) bleek
-%   ...'')
+\subsection{Machine-learningmethodes voor anomaliedetectie in web- en API-verkeer}
 
-Je mag deze sectie nog verder onderverdelen in subsecties als dit de structuur van de tekst kan verduidelijken.
+Machine-learning anomaliedetectiesystemen worden in de literatuur onderverdeeld in supervised, unsupervised en semi-supervised benaderingen. Deze indeling en bijhorende eigenschappen zijn gebaseerd op de overzichtsstudie van Saabith en Vinothraj \Autocite{Saabith2023}.
+Supervised learning vereist gelabelde datasets waar expliciet normaal en afwijkend gedrag is aangeduid. Tijdens de training leert het model de relatie tussen de invoerkenmerken en de geassocieerde labels, waardoor het instaat is om gekende anomalieën te identificeren. Hoewel deze benadering uitermate geschikt is in het detecteren van gekende anomalieën vanuit zijn dataset, is de toepasbaarheid eerder beperkt door het gebrek aan betrouwbare en representatieve gelabelde datasets.
+Unsupervised learning benaderingen leert Anomalieën herkennen gebaseerd op patronen en afwijkend gedrag in de data, zonder nood te hebben aan gelabeld trainingsmateriaal. Anomalieën worden beschouwd als datapunten die afwijken van het dominante gedrag of niet behoren tot een bestaande cluster. Deze algoritmen voegen gegevenspunten samen op basis van overeenkomsten en verschillen. Deze methoden zijn geschikt voor het identificeren van ongekende Anomalieën en het identificeren van complexe patronen in data, maar identificeert meer false positives door gebrek aan labeld data en kan mogelijk geen onderscheid maken tussen verschillende Anomalieën.
+Semisupervised learning vormt een tussenvorm hierbij wordt het model voornamelijk getrained op niet-gelabelde data, aangevuld met een beperkte hoeveelheid gelabelde gegevens of vooraf gedefinieerde profielen van normaal gedrag. Niet gelabelde data wordt gebruikt om de accuraatheid van het model te verbeteren, terwijl gelabelde data ervoor zorgt dat het algoritme directer anomalieën kan detecteren. Deze methode zorgt ervoor dat de voordelen van unsupervised detectie worden gecombineerd met extra context van labeld data, waardoor de detectie van anomalieën wordt verfijnt en het aantal false positives worden gereduceerd \Autocite{Saabith2023}.
+
+
+\subsection{Securitydata en feature-extractie voor anomaliedetectie }
+
+Anomaliedetectie binnen Web- en API-beveiliging is strek afhankelijk van de beschikbare data, slechte data kwaliteit zoals onvolledige, inconsistente API metrics zorgen voor onnauwkeurige resultaten en verhogen het risico op false positives en negatives. Het verzekeren van data integriteit door correcte collectie, opslag en preprocessing is cruciaal voor effectieve anomalie detectie \Autocite{Meegle2025}.
+Tegenovergesteld aan klassieke netwerkaanvallen bestaat misbruik bij web- en API-omgevingen vaak uit afwijkend gebruik van legitieme functionaliteit, dit zorgt ervoor dat anomalieën zich eerder zichtbaar maken op gedragsniveau in plaats van via duidelijke signaturen \Autocite{OWASP2023}
+Ruwe logdata kan niet rechtstreeks gebruikt worden voor machine-learning gebaseerde anomaliedetectie. Daarom is feature-extractie een essentiële stap, waarbij de parameters gebruikt worden als data punten in een dataset zodat afwijkingen ten opzichte van normaal gedrag kunnen worden geïdentificeerd Veelgebruikte features zijn onder andere: 
+
+\begin{itemize}
+    \item Client IP addres
+    \item API endpoint 
+    \item Response Data Size
+    \item Status code 
+    \item Timestamp
+    \item Request type
+\end{itemize}
+
+Onderzoek naar API traffic anomaly detection toont aan dat dergelijke feature gebaseerde representaties geschikt zijn voor machine learning unsupervised of semi supervised anomaliedetectie waar data niet betrouwbaar gelabeld is \Autocite{Sowmya2023}.
+
+
+\subsection{Evaluatiecriteria en meerwaarde van anomaliedetectie in een SOC-context}
+
+De keuze in Evaluatiecriteria is afhankelijk van toepassingscontext als de kenmerken van de beschikbare data. Meerdere evaluatiemaatstaven worden gebruikt voor het analyseren van de performantie en meerwaarde van een machine-learning gebasseerd algoritme in anomalie detectie\Autocite{Saabith2023}. 
 
 %---------- Methodologie ------------------------------------------------------
 \section{Methodologie}%
 \label{sec:methodologie}
 
-Hier beschrijf je hoe je van plan bent het onderzoek te voeren. Welke onderzoekstechniek ga je toepassen om elk van je onderzoeksvragen te beantwoorden? Gebruik je hiervoor literatuurstudie, interviews met belanghebbenden (bv.~voor requirements-analyse), experimenten, simulaties, vergelijkende studie, risico-analyse, PoC, \ldots?
+De bachelorproef start met een literatuurstudie die zal dienen als theoretische basis voor het onderzoek rond anomaliedetectie in web- en API-verkeer. Gelijklopend hiermee wordt er een analyse gemaakt van de context van Evolane ook wordt er een requirement analyse gemaakt die zal dienen als referentiekader, waarna in opeenvolgende fasen een dataset wordt opgebouwd, een Proof of Concept ontwikkeld en de resultaten geëvalueerd. Doorheen het onderzoek zullen alle fasen van het onderzoek worden gedocumenteerd. 
 
-Valt je onderwerp onder één van de typische soorten bachelorproeven die besproken zijn in de lessen Research Methods (bv.\ vergelijkende studie of risico-analyse)? Zorg er dan ook voor dat we duidelijk de verschillende stappen terug vinden die we verwachten in dit soort onderzoek!
+\subsection{Literatuurstudie}
 
-Vermijd onderzoekstechnieken die geen objectieve, meetbare resultaten kunnen opleveren. Enquêtes, bijvoorbeeld, zijn voor een bachelorproef informatica meestal \textbf{niet geschikt}. De antwoorden zijn eerder meningen dan feiten en in de praktijk blijkt het ook bijzonder moeilijk om voldoende respondenten te vinden. Studenten die een enquête willen voeren, hebben meestal ook geen goede definitie van de populatie, waardoor ook niet kan aangetoond worden dat eventuele resultaten representatief zijn.
+Om het onderzoeksprobleem correct te kunnen situeren, wordt er een literatuurstudie uitgevoerd rond anomaliedetectie, machine learning in cybersecurity en loganalyse. Deze literatuurstudie heeft als doel: 
+- Inzicht verkrijgen in moderne technieken voor detectie van afwijkend gedrag in web- en API-verkeer. 
+- Bestaande methoden en modellen te identificeren die relevant zijn voor de opbouw van het prototype. 
+- De noodzaak en toegevoegde waarde van een ML-gedreven benadering binnen de context van Evolane te onderbouwen
+De bevindingen in de literatuurstudie vormen de basis voor de requirement analyse en het bepalen welke technieken in het Proof of Concept onderzocht worden. 
 
-Uit dit onderdeel moet duidelijk naar voor komen dat je bachelorproef ook technisch voldoen\-de diepgang zal bevatten. Het zou niet kloppen als een bachelorproef informatica ook door bv.\ een student marketing zou kunnen uitgevoerd worden.
 
-Je beschrijft ook al welke tools (hardware, software, diensten, \ldots) je denkt hiervoor te gebruiken of te ontwikkelen.
+\subsection{Requirementsanalyse }
 
-Probeer ook een tijdschatting te maken. Hoe lang zal je met elke fase van je onderzoek bezig zijn en wat zijn de concrete \emph{deliverables} in elke fase?
+Gelijklopend met de literatuurstudie wordt er een requirement analyse uitgevoerd om het onderzoeksprobleem scherp af te bakenen, dit gebeurt aan de hand van interviews met belanghebbenden. De verzamelde vereisten worden in overleg met Evolane geprioriteerd. 
+
+\subsection{Dataverzameling en normalisatie}
+
+Om een reproduceerbare en herbruikbare dataset op te bouwen wordt een datastroom opgezet bestaande uit Akamai access logs en SIEM-events. De verzamelde gegevens worden genormaliseerd naar een homogene dataset. Python wordt gebruikt voor data cleaning, parsing en preprocessing te automatiseren. Het resultaat is een gestructureerde dataset in CSV-formaat.
+
+\subsection{Feature engineering en gedragsmodellering}
+
+Uit de genormaliseerde data worden betekenisvolle kenmerken geëxtraheerd die gebruikt kunnen worden voor het detecteren van afwijkend gedrag in web- en API-verkeer. De selectie van deze kenmerken gebeurt op basis van inzichten uit de literatuurstudie. De data wordt samengevoegd over tijdsvensters en per endpoint of client, zodat we gedragsprofielen kunnen opbouwen. Het resultaat van deze fase is een feature-set die geschikt is voor toepassing binnen het Proof of Concept. 
+
+\subsection{Proof-of-Concept}
+
+Om de theoretische inzichten te toetsen wordt er een Proof of Concept uitgewerkt waarin een anomaliedetectiemethode wordt geïmplementeerd. De implementatie van dit machine learning model zal worden getest en gevalideerd. Het uiteindelijke resultaat kan dan gebruikt worden om te demonstreren aan de belanghebbenden hoe dit systeem zou werken binnen de werkelijke infrastructuur van Evolane. 
+
+\subsection{Documentatie}
+
+Doorheen het gehele proces van de bachelorproef wordt er stapsgewijs documentatie opgesteld voor iedere fase. Hier kan later terug naar verwezen worden bij vragen, en kan ook gebruikt worden voor de implementatie te reproduceren. 
+
+\subsection{Conclusie & advies}
+
+Eenmaal alles is opgesteld en de bijhorende evaluatie is uitgevoerd wordt er een conclusie geformuleerd op basis van de bekomen resultaten. Hierbij wordt nagegaan in welke mate een machine-learning gedreven aanpak een meerwaarde biedt ten opzicht van klassieke detectie mechanismen. Op basis van de analyse wordt een onderbouwd advies geformuleerd meet aandacht voor toepasbaarheid, voordelen, beperkingen en mogelijke vervolgstappen.
+
+\FloatBarrier
+\subsection{Planning}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{Gantt_Diagram.png}
+    \caption{Gantt diagram met de verschillende fasen en milestones van het onderzoek.}
+    \label{fig:gantt}
+\end{figure}
 
 %---------- Verwachte resultaten ----------------------------------------------
 \section{Verwacht resultaat, conclusie}%
 \label{sec:verwachte_resultaten}
 
-Hier beschrijf je welke resultaten je verwacht. Als je metingen en simulaties uitvoert, kan je hier al mock-ups maken van de grafieken samen met de verwachte conclusies. Benoem zeker al je assen en de onderdelen van de grafiek die je gaat gebruiken. Dit zorgt ervoor dat je concreet weet welk soort data je moet verzamelen en hoe je die moet meten.
+Het verwachte resultaat van dit onderzoek is een werkend proof of concept waarin afwijkend gedrag gedetecteerd kan worden op basis van Akamai-acceslogs en SIEM-data. Het PoC zal aantonen dat machine learning gedreven methoden geschikt zijn voor het detecteren van nieuwe anomalieen, daarnaast zal het ook een vermindering aantonen in het aantal false positives. Deze resultaten zullen dan een basis vormen voor het antwoord op de hoofd- en deelvragen.
 
-Wat heeft de doelgroep van je onderzoek aan het resultaat? Op welke manier zorgt jouw bachelorproef voor een meerwaarde?
-
-Hier beschrijf je wat je verwacht uit je onderzoek, met de motivatie waarom. Het is \textbf{niet} erg indien uit je onderzoek andere resultaten en conclusies vloeien dan dat je hier beschrijft: het is dan juist interessant om te onderzoeken waarom jouw hypothesen niet overeenkomen met de resultaten.
+De Proof of Concept zal een duidelijk beeld geven aan Evolane wat er precies mogelijk is met een machine learning gedreven anomalie detectiesyteem. Verder zullen de fasen van het onderzoek aantonen wat de voordelen en nadelen zijn. Tot slot zal de verwachte conclusie zijn dat een ML-gedreven anomalie detectiesysteem technisch haalbaar is in de omgeving van Evolane en een voordeel kan zijn voor de beveiliging van de omgevingen van hun klanten.
 
