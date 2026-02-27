@@ -1,6 +1,123 @@
 \chapter{\IfLanguageName{dutch}{Stand van zaken}{State of the art}}%
 \label{ch:stand-van-zaken}
 
+% Eigen stand van zaken: 
+\section{Web- en API-beveiliging: context en uitdagingen}
+\label{sec:api-security-context}
+\subsection{De groeiende complexiteit van API-aanvallen}
+\label{subsec:api-aanvallen-complexiteit}
+% Beschrijven van de toename in complexiteit en frequentie van API-aanvallen, ondersteund met recente cijfers. 
+
+De afgelopen jaren is er een duidelijke toename waarneembaar in de complexiteit en frequentie van aanvallen op Application Programming Interfaces(API's). Akamai benadrukt dat API-aanvallen zich vaak richten op kwetsbaarheden in de API-endpoints en de achterliggende logica, hierdoor heeft de aanvaller een beter begrip nodig van de structuur en het gedrag van de API. 
+In tegenstelling tot klassieke webapplicatie-aanvallen, die vaak de zichtbare onderdelen van een webapplicatie gaan aanvallen, richten API-aanvallen zich eerder op de communicatiekanalen tussen de softwarecomponenten. Beide types kunnen leiden tot ongeautoriseerde toegang tot gevoelige data. Volgens het rapport van Akamai is er een stijging in web aanvallen van 33 procent tussen 2023 en 2024. %Akamai bron nog toevoegen
+
+OWASP beschrijft in de API Security Top 10 (2023) dat API-aanvallen voornamelijk voortkomen uit fouten in de authenticatie en autorisatie. Kwetsbaarheden zoals Broken object Level Authorization en Broken Function Level Authorization tonen aan dat aanvallers misbruik maken van endpoints die technisch correct werken, maar er onvoldoende wordt gecontrolleerd of de gebruiker toegang heeft tot bepaalde objecten of functies.
+Hiernaast beschrijft OWASP ook risico's zoals Unrestricted Resource Consumption en Unrestricted Access to Sensitive Business Flows, hier gaan aanvallers API's misbruiken door op grote schaal requests te automatiseren. Deze security risico's wijzen erop dat API aanvallen moeilijk te detecteren zijn via traditionele signatures, omdat ze gebruik maken van technisch correcte requests met een afwijkend gebruikerspatroon. %OWASP bron nog toevoegen
+
+Een zorgwekende ontwikkeling is de toename in het gebruik van artificiële intelligentie bij aanvallen. \textcite{Akamai2025} stelt vast dat moderne aanvallen gebruik maken van AI-gedreven bots en geautomatiseerde scripts voor een variatie aan aanvallen, zoals credential stuffing, distributed denial-of-service aanvallen en grootschalig API-misbruik. Wat de detectie van geautomatiseerde aanvallen bemoeilijkt is dat ze adaptief gedrag vertonen.
+
+Een voorbeeld is de Dell API-breach uit 2024, waarbij de data records van 49 miljoen klanten werden gecompromiteerd door een API kwetsbaarheid. De aanvallers konden via een kwetsbaarheid in een API toegang krijgen door het partner portaal en kregen zo toegang tot valse accounts. Dit toont aan dat zelfs grote tech bedrijven zoals Dell kwetsbaar zijn voor API aaanvallen wanneer er onvoldoende anomaliedetectie aanwezig is\autocite{Approov2024}.   
+
+De verandering van technische exploits naar gedragsmatige exploitatie heeft een grote impact voor de detectiemethodologie. Waar traditionele rule-based detectie nog steeds van belang is voor het detecteren van bekende aanvalspatronen, falen ze echter bij het detecteren van misbruik bij afwijkend gedrag binnen een technisch correcte API-interactie\textcite{Astra2025}. 
+\subsection{Beperkingen van traditionele detectiemechanismen}
+\label{subsec:traditioneel-beperkingen}
+% Leg uit waarom rule-based systemen tekorschieten bij moderne dreigingen.
+
+Traditionele beveiligingsmechanismen zoals Web Application Firewall (WAF), signature based Intrusion Detection Systems (IDS) en regelgebasseerde detectiesystemen steunen voornamelijk op bekende aanvalssignaturen en patronen die op voorhand gedefineerd zijn. /textcite{NIST2007} zoals NIST beschrijft in hun Intrusion Detection and Prevention systems richtlijnen zijn deze systemen zeer effectief in het detecteren van gedocumenteerde dreigingen, maar eerder beperkt in het detecteren van nieuwe aanvallen waarvoor nog geen signature aanval bestaat. 
+
+Recente literatuur bevestigt deze claims en benadrukt signature-based systemen te beperkt zijn in het detecteren van zero-day aanvallen binnen het snel evoluerende cybersecuritylandschap. Daarom wordt machine learning steeds vaker voorgesteld als een aanvulling op deze bestaande systemen om eerder ongekende aanvallen te detecteren, false positives te verminderen en beveiliging te verbeteren. % komt van deze bron Impact of Machine Learning on Intrusion Detection Systems for the Protection of Critical Infrastructure
+\section{Anomaliedetectie binnen Security Operations}
+\label{sec:anomaliedetectie-soc}
+%Zou hier graag nog een subsectie aan toe willen voegen
+
+\subsection{De toegevoegde waarde van ML in SOC-context}
+\label{subsec:toegevoegde-waarde-ML}
+% Motiveer waarom ML een waardevolle aanvulling is op klassieke detectiesysteem
+
+
+
+\section{Machine learning-methoden voor anomaliedetectie}
+\label{sec:ML-methoden-anomalie}
+
+Zoals beschreven in sectie \ref{subsec:traditionele-beperkingen} hebben de beperkingen van traditionele rule-based detectiesystemen ervoor gezorgd dat de interesse in machine learning gedreven benaderingen voor anomaliedetectie zijn gestegen. Deze sectie biedt een overzicht van de belangrijkste machine learning gedreven benaderingen voor anomaliedetectie, met specifieke aandacht op hun toepasbaarheid. 
+
+\subsection{Taxonomie: supervised, unsupervised en semi-supervised}
+\label{subsec:toegevoegde-waarde-ML}
+% overzicht geven van de 3 hoofdbenaderingen met voor- en nadelen. 
+
+Machine learning benaderingen voor anomaliedetectie worden onderverdeeld in 3 categorieën op basis van de nood aan gelabelde trainingsdata. \textcite{Saabith2023} maakt een onderscheid in drie hoofdcategorieën: supervised learning, unsupervised learning en semi-supervised learning. Deze benaderingen bevatten elk sterke punten en zwakke punten die hun toepasbaarheid bepalen binnen security context.
+
+
+\subsubsection{Supervised learning}
+
+Supervised learning-algoritmen vereisen een dataset waarbij elk datapunt uitdrukkelijk gelabeld is als normaal of abnormaal gedrag, vervolgens leert het model tijdens de trainingsfase de relatie tussen de invoerkenmerken (features in de dataset) en de daarbij horende labels hierdoor is het instaat om nieuwe datapunten te classificeren~\autocite{Saabith2023}. 
+De meest gebruikte algoritmen binnen deze categorie zijn: bayesian networks, k-nearest neighbors, decision trees, supervised neural networks en suport vector machines. Over het algemeen ligt de detectierate hoger bij supervised modellen dan bij unsupervised modellen, maar dit gaat dan ook gepaard met de moeilijkheidsgraad in het trainen van het model waarbij dat bij supervised hoger ligt\autocite{Kumari2024}. 
+De voornaamste beperking van supervised learning-algoritme is de afhankelijkheid aan een gelabelde dataset. In werkelijkheid zijn gelabelde datasets weinig te vinden. Ten eerste vereist het labelen van data security-analisten met expertise in het domein dat duizenden events dienen te categoriseren, een proces dat lang duurt~\autocite{Kumar2025}. 
+Vervolgens kan er niet worden gegarandeerd dat de trainingsdata alle relevante aanvalstypes bevat, zo is het mogelijk dat niet bekende aanvalstypes, zero-day exploits en andere varianten van aanvallen mogelijks niet aanwezig zijn in de trainingsdata van het model. Dit kan ervoor zorgen dat het model nieuwe anomaliën mist~\autocite{Kumari2024}.
+
+
+\subsubsection{Unsupervised learning}
+
+\subsubsection{Semi supervised learning}
+
+
+\subsection{Veelgebruikte algoritmen per categorie}%
+\label{subsec:ml-algoritmen-overzicht}
+% Korte beschrijving van populaire algoritmen binnen elke categorie
+
+\subsection{Toepassingen in API-security}
+\label{subsec:toegevoegde-waarde-ML}
+% Bespreken van alreeds bestaande implementaties van ML in API anomaly detection
+
+
+
+\section{Feature engineering voor API anomaliedetectie}
+\label{sec:ML-methoden-anomalie}
+\subsection{Belang van data quality}
+\label{subsec:toegevoegde-waarde-ML}
+% Uitleggen waarom goede data data essentieel is voor ML success 
+
+\subsection{Essentiële features uit Akamai logs en SIEM data}
+\label{subsec:toegevoegde-waarde-ML}
+% Lijst de belangrijkste features voor anomaly detection in API-context
+
+\subsection{Time-series modellering}
+\label{subsec:toegevoegde-waarde-ML}
+% Uitleggen waarom temporal patterns belangrijk zijn 
+
+
+
+\section{Evaluatie en performance metrics}
+\label{sec:ML-methoden-anomalie}
+\subsection{Klassieke metrics voor anomaliedetectie}
+\label{subsec:toegevoegde-waarde-ML}
+% Definiëren van de metrics die je gaat gebruiken voor de evaluatie van het model. 
+
+\subsection{Operationele criteria}
+\label{subsec:toegevoegde-waarde-ML}
+% Bespreken van praktische eisen vanuit SOC perspectief
+
+
+
+\section{Implementatie-uitdagingen en best practices}
+\label{sec:ML-methoden-anomalie}
+\subsection{Technische uitdagingen}
+\label{subsec:toegevoegde-waarde-ML}
+% INHOUD: bespreken van technische uitdagingen bij de implementatie van een ML model
+
+\subsection{Best practices}
+\label{subsec:toegevoegde-waarde-ML}
+% Aanbevelingen geven op basis van infrastructuur
+
+
+
+\section{Conclusie literatuurstudie}
+\label{sec:ML-methoden-anomalie}
+
+% Voorbeeldtekst van het sjabloon  
+
+
+
 % Tip: Begin elk hoofdstuk met een paragraaf inleiding die beschrijft hoe
 % dit hoofdstuk past binnen het geheel van de bachelorproef. Geef in het
 % bijzonder aan wat de link is met het vorige en volgende hoofdstuk.
