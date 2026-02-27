@@ -36,13 +36,44 @@
 \label{subsec:dataverzameling en normalisatie}
 %Het doel van dit onderdeel is om een datastroom op te zetten van de Akamai access logs zodat we python kunnen gebruiken voor deze op te schonen en het doel is om een gestructureerde set op te bouwen in CSV formaat. 
 
+Om een reproduceerbare en herbruikbare dataset op te bouwen, wordt een datastroom opgezet op basis van Akamai access logs. Deze logs bevatten onder meer informatie over client-IP-adressen, gebruikte API-endpoints, HTTP-methodes, statuscodes, responsegroottes en tijdstempels. Indien relevant worden bijkomende SIEM-events geïntegreerd om extra context toe te voegen.
+
+De ruwe loggegevens worden geëxporteerd en verwerkt met behulp van Python. De library \texttt{pandas} wordt gebruikt voor data cleaning, parsing en preprocessing. Dit omvat onder andere het verwijderen van onvolledige of corrupte records, het uniformeren van tijdsformaten, het omzetten van categorische variabelen en het structureren van de data in een consistent schema.
+
+Na normalisatie worden de gegevens opgeslagen in een gestructureerd CSV-formaat. Deze gestructureerde dataset vormt de basis voor verdere analyse, feature engineering en modeltraining binnen het proof-of-concept.
+
 \subsection{Feature engineering en gedragsmodellering}
 \label{subsec:Feature engineering}
 % Het doel is om op basis van de literatuurstudie een selectie maken van de kenmerken waarop het model zal draaien. Uit deze stap moet een feature set komen die geschikt is voor toepassing. 
 
+In deze fase worden betekenisvolle kenmerken (features) geëxtraheerd uit de genormaliseerde dataset. De selectie van deze features is gebaseerd op inzichten uit de literatuurstudie rond anomaliedetectie in web- en API-verkeer.
+
+Voorbeelden van potentiële features zijn onder meer:
+- Aantal requests per client binnen een bepaald tijdsvenster  
+- Verdeling van HTTP-statuscodes  
+- Frequentie van specifieke API-endpoints  
+- Gemiddelde en afwijkende responsegroottes  
+- Tijd tussen opeenvolgende requests  
+
+De data wordt geaggregeerd over vooraf gedefinieerde tijdsvensters (bijvoorbeeld per minuut of per vijf minuten) en gegroepeerd per client, endpoint of sessie. Op die manier worden gedragsprofielen opgebouwd die normaal gebruik representeren. 
+
+Het resultaat van deze fase is een feature-set die geschikt is voor toepassing binnen machine-learningmodellen voor anomaliedetectie.
+
+
 \subsection{Selectie machine-learning model}
 \label{subsec:traditioneel-beperkingen}
 % Binnen de literatuurstudie onderzoeken we welke machine learning benaderingen er effectief zijn, en hier gaan we dan een selectie maken welke geschikt zijn voor het proof of concept op basis van de beschikbare data
+
+Op basis van de literatuurstudie en de kenmerken van de beschikbare data wordt een geschikte machine-learningbenadering geselecteerd. Aangezien de dataset voornamelijk niet-gelabelde data bevat, ligt de focus op unsupervised en semi-supervised anomaliedetectietechnieken.
+
+Mogelijke modellen die onderzocht worden zijn onder andere Isolation Forest, Local Outlier Factor (LOF), One-Class SVM en autoencoders. De selectie gebeurt op basis van volgende criteria:
+- Geschiktheid voor niet-gelabelde data  
+- Vermogen om gedragsmatige anomalieën te detecteren  
+- Interpretatie van resultaten  
+- Computationele haalbaarheid binnen de scope van een proof-of-concept  
+
+Na een vergelijkende analyse wordt één primair model geselecteerd voor implementatie binnen het proof-of-concept. Indien haalbaar kan een tweede model worden gebruikt ter vergelijking van detectieperformantie.
+
 
 \subsection{proof-of-concept}
 \label{subsec:Poc}
@@ -53,5 +84,5 @@
 % Analyse opbouwen in welke mate het machine learning gebasseerd anomaliedetectiesysteem een meerwaarde is binnen de security omgeving van Evolane en het formuleren van advies. 
 
 
-\lipsum[21-25]
+
 
