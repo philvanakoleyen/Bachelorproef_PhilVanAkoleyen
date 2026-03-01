@@ -113,6 +113,8 @@ Dit model is geschikt voor situaties waarin afwijkend gedrag eerder zeldzaam is 
 \subsection{Belang van data quality}
 \label{subsec:toegevoegde-waarde-ML}
 % Uitleggen waarom goede data data essentieel is voor ML success 
+Anomaliedetectie binnen Web- en API-beveiliging is sterk afhankelijk van de beschikbare data, slechte data kwaliteit zoals onvolledige, inconsistente API metrics zorgen voor onnauwkeurige resultaten en verhogen het risico op false positives en negatives. Het verzekeren van data integriteit door correcte collectie, opslag en preprocessing is cruciaal voor effectieve anomalie detectie \Autocite{Meegle2025}.
+
 
 \subsection{Essentiële features uit Akamai logs}
 \label{subsec:toegevoegde-waarde-ML}
@@ -125,6 +127,12 @@ Dit model is geschikt voor situaties waarin afwijkend gedrag eerder zeldzaam is 
 \subsection{Klassieke metrics voor anomaliedetectie}
 \label{subsec:toegevoegde-waarde-ML}
 % Definiëren van de metrics die je gaat gebruiken voor de evaluatie van het model. 
+De keuze in Evaluatiecriteria is afhankelijk van toepassingscontext als de kenmerken van de beschikbare data. Meerdere evaluatiemaatstaven worden gebruikt voor het analyseren van de performantie en meerwaarde van een machine-learning gebaseerd algoritme in anomalie detectie\Autocite{Saabith2023}. 
+
+Bij binaire classificatie, zoals anomaliedetectie, worden precision en recall gebruikt om de prestaties van een model te evalueren, nadrukkelijk bij niet gelijk verdeelde datasets. In dit geval zijn anomaliteiten zeldaam ten opzichte van normaal gedrag.
+Precision meet het aantal correct gedetecteerde anomalieën ten opzichte van alle als anomalie geclassificeerde observaties. Recall meet het aandeel correct gedetecteerde anomalieën ten opzichte van de werkelijke anomalieën. 
+Doordat er een class-imbalance is focust Precision en Recall zich op de minderheidsklasse in dit geval de anomalieën. 
+De F1-score is een gebalanceerde metric doordat het het harmonisch gemiddelde berekent van precision en recall dit zorgt ervoor dat de F1-score slechts stijgt wanneer beide onderdelen stijgen. %bron https://aman.ai/primers/ai/evaluation-metrics/?
 
 \section{Conclusie literatuurstudie}
 \label{sec:ML-methoden-anomalie}
