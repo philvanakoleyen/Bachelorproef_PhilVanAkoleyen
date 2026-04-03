@@ -2,30 +2,38 @@
 \label{ch:stand-van-zaken}
 
 % Eigen stand van zaken: 
-\section{Web- en API-beveiliging: context en uitdagingen}
+\section{OWASP en hedendaagse web- en API-dreigingen}
 \label{sec:api-security-context}
+Binnen web- en API-beveiliging speelt OWASP (Open Web Application Security Project) een centrale rol voor het identificeren van de tien meest kritieke kwetsbaarheden binnen web applicaties. OWASP publiceert periodiek top tien lijsten voor zowel web applicaties als voor API's\autocite{OWASP2025, OWASPAPI2023}%OWASP WEB EN API BRON. 
+
+Voor de webapplicaties omvat de OWASP TOP 10 kwetsbaarheden zoals injection-aanvallen, broken authentication en security misconfigurations. Deze kwetsbaarheden zijn voornamelijk gericht tot de interactie tussen gebruiker en de webinterface\autocite{OWASP2025}%OWASP WEB BRON. 
+
+Voor API's ligt de fouces op kwetsbaarheden zoals Broken Object Level Authorization (BOLA), Broken Function Level Authorization en Unrestricted Resource Consumption (OWASP, 2023). API kwetsbaarheden zijn vaker gerelateerd aan onvoldoende controle op de toegang tot deze APIs en misbruiken van businesslogica\autocite{OWASPAPI2023}%API BRON. 
+
+Het onderscheid dat gemaakt tussen web- en API-kwetsbaarheden benadrukt dat er nood is aan beveiliging op meerdere niveaus als er gesproken wordt over de beveiling van web applicaties. Waar dat webaanvallen gericht zijn op de gebruikersinterface, richten API-aanvallen zich tot de directe communicatie tussen systemen. 
+
+\subsection{De groeiende complexiteit van Web-aanvallen}
+\label{subsec:api-aanvallen-complexiteit}
+De complexiteit van aanvallen gericht op webapplicaties is in de afgelopen jaren sterk toegenomen. Volgens rapporten van Akamai is er een significante stijging in webaanvallen, hier spreken ze onder andere over een toename van 33 procent tussen 2023 en 2024\autocite{Akamai2025}%Akamai bron.
+
+Moderne webaanvallen op de OWASP TOP 10 zijn: Broken Access Control waar een aanvaller buiten zijn rechten opereert, Injection attacks dit is wanneer de aanvaller code zoals SQL of OS commandos via de webapplicatie uit laat voeren op de server waar de applicatie gehost word om zo info of data te verkregen en authentication failure dit is wanneer de beveiliging van de applicatie er onvoldoende is slaagt om de user van de aanvaller te detecteren als ongeldig of incorrect dit kan dan leiden tot brute force en geautomatiseerde aanvallen\autocite{OWASP2025}%bron owasp WEB.
+
+Een kritieke evolutie is dat aanvallen steeds moeilijker te onderscheiden zijn van normaal geldig verkeer. Vandaag de dag maken aanvallers steeds vaker gebruik van geautomatiseerde bots die speciaal ontworpen zijn om menselijk gedrag zo nauwkeurig mogelijk te simuleren, dit doen ze door het implementeren van variatie in request frequentie en navigatiepatronen. Deze geautomatiseerde aanvallen maken gebruik van grote aantallen requests die geldig lijken en zich aan kunnen passen naar de beveiliging van een webapplicatie. Dit zorgt ervoor dat het verschil tussen een normaal en kwaadaardig verkeer moeilijker waarneembaar wordt\autocite{f5_automated_threats}.%F5 bron 
 \subsection{De groeiende complexiteit van API-aanvallen}
 \label{subsec:api-aanvallen-complexiteit}
-% Beschrijven van de toename in complexiteit en frequentie van API-aanvallen, ondersteund met recente cijfers. 
 
-De afgelopen jaren is er een duidelijke toename waarneembaar in de complexiteit en frequentie van aanvallen op Application Programming Interfaces(API's). Akamai benadrukt dat API-aanvallen zich vaak richten op kwetsbaarheden in de API-endpoints en de achterliggende logica, hierdoor heeft de aanvaller een beter begrip nodig van de structuur en het gedrag van de API. 
-In tegenstelling tot klassieke webapplicatie-aanvallen, die vaak de zichtbare onderdelen van een webapplicatie gaan aanvallen, richten API-aanvallen zich eerder op de communicatiekanalen tussen de softwarecomponenten. Beide types kunnen leiden tot ongeautoriseerde toegang tot gevoelige data. Volgens het rapport van Akamai is er een stijging in web aanvallen van 33 procent tussen 2023 en 2024\textcite{Akamai2025}. %Akamai bron nog toevoegen
+De complexiteit en frequentie van aanvallen op APIs is eveneens sterk toegenomen. APIs vormen een essentieel onderdeel voor de moderne webapplicaties, maar deze vergroten het aanvalsoppervlak aanzienlijk. Volgens Akamai is er een toename van 32 procent waarneembaar in API aanvallen van 2023 op 2024\autocite{Akamai2025}. %Akamai bron
 
-OWASP beschrijft in de API Security Top 10 (2023) dat API-aanvallen voornamelijk voortkomen uit fouten in de authenticatie en autorisatie. Kwetsbaarheden zoals Broken object Level Authorization en Broken Function Level Authorization tonen aan dat aanvallers misbruik maken van endpoints die technisch correct werken, maar er onvoldoende wordt gecontrolleerd of de gebruiker toegang heeft tot bepaalde objecten of functies.
-Hiernaast beschrijft OWASP ook risico's zoals Unrestricted Resource Consumption en Unrestricted Access to Sensitive Business Flows, hier gaan aanvallers API's misbruiken door op grote schaal requests te automatiseren. Deze security risico's wijzen erop dat API aanvallen moeilijk te detecteren zijn via traditionele signatures, omdat ze gebruik maken van technisch correcte requests met een afwijkend gebruikerspatroon\textcite{OWASP2023}. %OWASP bron nog toevoegen
+In tegenstelling tot klassieke webaanvallen richten API-aanvallen zich op de communicatie tussen softwarecomponenten. Volgens OWASP ontstaan API-kwetsbaarheden voornamelijk door foutieve of beperkte authenticatie en autorisatie. Kwetsbaarheden zoals Broken Object Level Authorization en Broken Function Level Authorization tonen aan dat aanvallers zich richten tot endpoints die technisch correct functioneren, maar onvoldoende toegangscontrole bevatten.
 
-Een zorgwekende ontwikkeling is de toename in het gebruik van artificiële intelligentie bij aanvallen. \textcite{Akamai2025} stelt vast dat moderne aanvallen gebruik maken van AI-gedreven bots en geautomatiseerde scripts voor een variatie aan aanvallen, zoals credential stuffing, distributed denial-of-service aanvallen en grootschalig API-misbruik. Wat de detectie van geautomatiseerde aanvallen bemoeilijkt is dat ze adaptief gedrag vertonen.
-
-Een voorbeeld is de Dell API-breach uit 2024, waarbij de data records van 49 miljoen klanten werden gecompromiteerd door een API kwetsbaarheid. De aanvallers konden via een kwetsbaarheid in een API toegang krijgen door het partner portaal en kregen zo toegang tot valse accounts. Dit toont aan dat zelfs grote tech bedrijven zoals Dell kwetsbaar zijn voor API aaanvallen wanneer er onvoldoende anomaliedetectie aanwezig is\textcite{Approov2024}.   
-
-De verandering van technische exploits naar gedragsmatige exploitatie heeft een grote impact voor de detectiemethodologie. Waar traditionele rule-based detectie nog steeds van belang is voor het detecteren van bekende aanvalspatronen, falen ze echter bij het detecteren van misbruik bij afwijkend gedrag binnen een technisch correcte API-interactie\textcite{Astra2025}. 
+Daarnaast worden API’s vaak misbruikt via geautomatiseerde requests, bijvoorbeeld bij Unrestricted Resource Consumption en business logic abuse. Dit type aanvallen maakt gebruik van legitieme interacties, waardoor detectie via traditionele signature-based systemen moeilijk is\autocite{OWASPAPI2023}.%bron OWASP 
 \subsection{Beperkingen van traditionele detectiemechanismen}
 \label{subsec:traditioneel-beperkingen}
 % Leg uit waarom rule-based systemen tekorschieten bij moderne dreigingen.
 
-Traditionele beveiligingsmechanismen zoals Web Application Firewall (WAF), signature based Intrusion Detection Systems (IDS) en andere regelgebasseerde detectiesystemen steunen voornamelijk op bekende aanvalssignaturen en patronen die op voorhand gedefineerd zijn. \autocite{Standards2007} zoals NIST beschrijft in hun Intrusion Detection and Prevention systems richtlijnen zijn deze systemen zeer effectief in het detecteren van gedocumenteerde dreigingen, maar eerder beperkt in het detecteren van nieuwe aanvallen waarvoor nog geen signature aanval bestaat. 
+Traditionele beveiligingsmechanismen zoals Web Application Firewall (WAF), signature based Intrusion Detection Systems (IDS) en andere regelgebaseerde detectiesystemen steunen voornamelijk op bekende aanvalssignaturen en patronen die op voorhand gedefineerd zijn. Zoals\textcite{Standards2007} beschrijft in hun Intrusion Detection and Prevention systems richtlijnen zijn deze systemen zeer effectief in het detecteren van gedocumenteerde dreigingen, maar eerder beperkt in het detecteren van nieuwe aanvallen waarvoor nog geen signature aanval bestaat. 
 
-Recente literatuur bevestigt deze claims en benadrukt signature-based systemen te beperkt zijn in het detecteren van zero-day aanvallen binnen het snel evoluerende cybersecuritylandschap. Daarom wordt machine learning steeds vaker voorgesteld als een aanvulling op deze bestaande systemen om eerder ongekende aanvallen te detecteren, false positives te verminderen en beveiliging te verbeteren\textcite{Kumar_2025}. % komt van deze bron Impact of Machine Learning on Intrusion Detection Systems for the Protection of Critical Infrastructure
+Recente literatuur bevestigt deze claims en benadrukt signature-based systemen te beperkt zijn in het detecteren van zero-day aanvallen binnen het snel evoluerende cybersecuritylandschap. Daarom wordt machine learning steeds vaker voorgesteld als een aanvulling op deze bestaande systemen om eerder ongekende aanvallen te detecteren, false positives te verminderen en beveiliging te verbeteren\autocite{Kumar_2025}. % komt van deze bron Impact of Machine Learning on Intrusion Detection Systems for the Protection of Critical Infrastructure
 
 
 \section{Anomaliedetectie binnen Security Operations}
@@ -33,13 +41,15 @@ Recente literatuur bevestigt deze claims en benadrukt signature-based systemen t
 %Zou hier graag nog een subsectie aan toe willen voegen
 
 De beperkingen van traditionele detectiemechanismen, zoals beschreven in \ref{subsec:traditioneel-beperkingen}, creëren een behoefte voor een aanvullend detectiesysteem binnen het Security Operations Team. 
+\subsection{Akamai APP en API-protector}
+\label{subsec:App-API}
 
 \subsection{De toegevoegde waarde van ML in SOC-context}
 \label{subsec:toegevoegde-waarde-ML}
 % Motiveer waarom ML een waardevolle aanvulling is op klassieke detectiesysteem bron: https://dl.acm.org/doi/10.1145/3723158?
 In moderne Security Operations Teams leidt een grote hoeveelheid security alerts tot een fenomeen wat door de literatuur beschreven wordt als alert fatigue. Dit is wanneer analisten worden overweldigd door een constante stroom van alerts en false positives. Met als gevolg een verhoogde operationele belasting, wat het risico biedt dat kritieke incidenten worden gemist. 
 
-De toegevoegde waarde van machine learning binnen een SOC-team heeft voordelen op verschillende niveaus: na het inwerken van het model een reductie van false positives, verbeterde detectie van abnormaal gedrag en het schakelen van reactief handelen naar proactief detecteren\textcite{crowdstrike}. %https://www.crowdstrike.com/en-us/cybersecurity-101/next-gen-siem/ai-siem/
+De toegevoegde waarde van machine learning binnen een SOC-team heeft voordelen op verschillende niveaus: na het inwerken van het model een reductie van false positives, verbeterde detectie van abnormaal gedrag en het schakelen van reactief handelen naar proactief detecteren\textcite{Crowdstrike2025}. %https://www.crowdstrike.com/en-us/cybersecurity-101/next-gen-siem/ai-siem/
 
 
 
@@ -59,68 +69,183 @@ Machine learning benaderingen voor anomaliedetectie worden onderverdeeld in 3 ca
 
 \subsubsection{Supervised learning}
 
-Supervised learning-algoritmen vereisen een dataset waarbij elk datapunt uitdrukkelijk gelabeld is als normaal of abnormaal gedrag, vervolgens leert het model tijdens de trainingsfase de relatie tussen de invoerkenmerken (features in de dataset) en de daarbij horende labels hierdoor is het instaat om nieuwe datapunten te classificeren~\textcite{Saabith2023}. 
-De algoritmen binnen deze categorie zijn: bayesian networks, k-nearest neighbors, random forest, supervised neural networks en suport vector machines. Over het algemeen ligt de detectierate hoger bij supervised modellen dan bij unsupervised modellen, maar dit gaat dan ook gepaard met de moeilijkheidsgraad in het trainen van het model waarbij dat bij supervised hoger ligt\textcite{Kumari2024}. 
-De voornaamste beperking van supervised learning-algoritmenn is de afhankelijkheid aan een gelabelde dataset. In werkelijkheid zijn gelabelde datasets weinig te vinden. Ten eerste vereist het labelen van data security-analisten met expertise in het domein dat duizenden events dienen te categoriseren, een proces dat lang duurt~\textcite{Kumar_2025}. 
-Vervolgens kan er niet worden gegarandeerd dat de trainingsdata alle relevante aanvalstypes bevat, zo is het mogelijk dat niet bekende aanvalstypes, zero-day exploits en andere varianten van aanvallen mogelijks niet aanwezig zijn in de trainingsdata van het model. Dit kan ervoor zorgen dat het model nieuwe subtiele anomaliën mist~\textcite{Kumari2024}.
+Supervised learning-algoritmen vereisen een dataset waarbij elk datapunt uitdrukkelijk gelabeld is als normaal of abnormaal gedrag, vervolgens leert het model tijdens de trainingsfase de relatie tussen de invoerkenmerken (features in de dataset) en de daarbij horende labels hierdoor is het instaat om nieuwe datapunten te classificeren~\autocite{Saabith2023}. 
+De algoritmen binnen deze categorie zijn: bayesian networks, k-nearest neighbors, random forest, supervised neural networks en suport vector machines. Over het algemeen ligt de detectierate hoger bij supervised modellen dan bij unsupervised modellen, maar dit gaat dan ook gepaard met de moeilijkheidsgraad in het trainen van het model waarbij dat bij supervised hoger ligt\autocite{Kumari2024}. 
+De voornaamste beperking van supervised learning-algoritmenn is de afhankelijkheid aan een gelabelde dataset. In werkelijkheid zijn gelabelde datasets weinig te vinden. Ten eerste vereist het labelen van data security-analisten met expertise in het domein dat duizenden events dienen te categoriseren, een proces dat lang duurt~\autocite{Kumar_2025}. 
+Vervolgens kan er niet worden gegarandeerd dat de trainingsdata alle relevante aanvalstypes bevat, zo is het mogelijk dat niet bekende aanvalstypes, zero-day exploits en andere varianten van aanvallen mogelijks niet aanwezig zijn in de trainingsdata van het model. Dit kan ervoor zorgen dat het model nieuwe subtiele anomalieën mist~\autocite{Kumari2024}.
 
 \subsubsection{Unsupervised learning}
 
-Unsupervised learning-algoritmen zijn in tegenstelling tot supervised benaderingen niet gebonden aan een gelabelde dataset waarop het model getraind moet worden. Deze modellen leren om patronen en structuren te herkennen in de data op basis van zowel gelijkheden als verschillen tussen datapunten. Punten die van het opgebouwde patroon afwijken of niet binnen een bestaande vooraf gedefineerde cluster past zullen worden gezien als een anomalie\textcite{Saabith2023}. 
-Algoritmen binnen deze categorie zijn: clustering methoden (K-means, DBSCAN), isolation forest, local outlier factor, Principal Component Analysis en Autoencoders. een van de voordelen van unsupervised machine learning modellen is dat ze uitblinken in het detecteren van ongekende anomalieën doordat ze zich niet baseren op historische trainingsdata\textcite{Kumari2024}.
+Unsupervised learning-algoritmen zijn in tegenstelling tot supervised benaderingen niet gebonden aan een gelabelde dataset waarop het model getraind moet worden. Deze modellen leren om patronen en structuren te herkennen in de data op basis van zowel gelijkheden als verschillen tussen datapunten. Punten die van het opgebouwde patroon afwijken of niet binnen een bestaande vooraf gedefinieerde  cluster past zullen worden gezien als een anomalie\textcite{Saabith2023}. 
+Algoritmen binnen deze categorie zijn: clustering methoden (K-means, DBSCAN), isolation forest, local outlier factor, Principal Component Analysis en Autoencoders. een van de voordelen van unsupervised machine learning modellen is dat ze uitblinken in het detecteren van ongekende anomalieën doordat ze zich niet baseren op historische trainingsdata\autocite{Kumari2024}.
 
-Een andere nuttige eigenschap van unsupervised learning is dat deze modellen continue leren wat normaal is op basis van de binnenkomende data, dit zorgt ervoor dat ze schaalbaar zijn in omgevingen waar veel data binnen komt en ze zich kunnen aanpassen naarmate de data veranderd\textcite{Traceable2024}.
+Een andere nuttige eigenschap van unsupervised learning is dat deze modellen continue leren wat normaal is op basis van de binnenkomende data, dit zorgt ervoor dat ze schaalbaar zijn in omgevingen waar veel data binnenkomt en ze zich kunnen aanpassen naarmate de data veranderd\autocite{Traceable2024}.
 
-De voornaamste beperking van unsupervised learning is dat het kan resulteren in een hogere false positive rate ten opzichte van een supervised benadering. Doordat het model geen expliciete instructies ontvangen heeft zal het alle statischtische datapunten die uitschieten beschouwen als verdacht, dit kan dus ook zeldzaam legitiem verkeer bevatten\textcite{Saabith2023}. 
+De voornaamste beperking van unsupervised learning is dat het kan resulteren in een hogere false positive rate ten opzichte van een supervised benadering. Doordat het model geen expliciete instructies ontvangen heeft zal het alle statistische datapunten die uitschieten beschouwen als verdacht, dit kan dus ook zeldzaam legitiem verkeer bevatten\autocite{Saabith2023}. 
 
 
 \subsubsection{Semi supervised learning}
 
-Semi-supervised learning is een combinatie benadering van beide voorgaande methoden, het model wordt dus getrained op zowel niet gelabelde data als gelabelde data. De unlabeld data dienen om de accuraatheid van het model te verhogen op niet gekende anomaliteiten en de labeld data geeft het model zicht op welke afwijkingen er voornamelijk zijn\textcite{Saabith2023}. 
-Algoritmen binnen deze categorie zijn one-class SVM en autoencoder met training data. Autoencoder kan zowel usnupervised als semi-supervised dit is afhankelijk van het wel of niet implementeren van labeld data. %komt uit deze bron https://kth.diva-portal.org/smash/get/diva2:1465807/FULLTEXT01.pdf
-Doordat semi-supervised beperkte labeld data gebruikt kan het accuratere beslissingen maken op wat wel of niet een afwijking is op het normale gedrag. Hierdoor kan het ten opzichte van een unsupervised benadering de false positive rate reduceren.  % komt uit https://www.emergentmind.com/topics/semi-supervised-anomaly-detection bron 
+Semi-supervised learning is een combinatie benadering van beide voorgaande methoden, het model wordt dus getraind op zowel niet gelabelde data als gelabelde data. De unlabeld data dienen om de accuraatheid van het model te verhogen op niet gekende anomaliteiten en de labeld data geeft het model zicht op welke afwijkingen er voornamelijk zijn\autocite{Saabith2023}. 
+Algoritmen binnen deze categorie zijn one-class SVM en autoencoder met training data. Autoencoder kan zowel usnupervised als semi-supervised dit is afhankelijk van het wel of niet implementeren van labeld data\autocite{Bajallan2020}. %komt uit deze bron https://kth.diva-portal.org/smash/get/diva2:1465807/FULLTEXT01.pdf
+Doordat semi-supervised beperkte labeld data gebruikt kan het accuratere beslissingen maken op wat wel of niet een afwijking is op het normale gedrag. Hierdoor kan het ten opzichte van een unsupervised benadering de false positive rate reduceren\autocite{EmergentMind_2026}.  % komt uit https://www.emergentmind.com/topics/semi-supervised-anomaly-detection bron 
 De voornaamste restrictie van een semi-supervised benadering is dat er hoewel in mindere maten nog steeds nood is aan gelabelde data voor het trainen van het model \autocite{Saabith2023}.
 
 \subsection{Veelgebruikte algoritmen per categorie}%
 \label{subsec:ml-algoritmen-overzicht}
 % Korte beschrijving van populaire algoritmen binnen elke categorie
 \subsubsection{Supervised ML modellen}
-Support Vector Machines (SVM) is een classificatie algoritme dat ontworpen is voor binaire classificatieproblemen. Het ML-model bepaalt een beslissingsvak(hyperplane) dat 2 classes("normaal"/"abnormaal") van elkaar scheidt, hierbij is het unieke kenmerk van SVM dat de hyperplane zo gekozen wordt dat de marge maximaal is tussen de classes. De datapunten die het dichtst bij de grens liggen worden de support vectors genoemd, deze bepalen namelijk de positie en vorm van de grens van normaal of abnormale datapunten. 
-SVMs worden doorgaans nog onderverdeeld in verschillende categorieën. Soft-margin SVM hierbij wordt er een beperkte fout tolerantie toegestaan om beter om te gaan met ruis of fout gelabelde data en hard-margin SVM bij dit model wordt er geen rekening gehouden met een foutmarge en wordt de marge tussen de classes gemaximaliseert\textcite{}.% https://www.researchgate.net/publication/390920977_Survey_of_Machine_Learning_Techniques_for_Anomaly_Detection_in_Cybersecurity 
+%RF
+Random Forest is een ensemble-gebasseerde supervised machine learning algoritme dat gebruikt kan worden voor anomalie detectie. Het model bestaat uit een verzameling van decision trees, waarbij elke boom binnen het model getrained wordt op een willekeurige subset uit de trainingsdata en een willekeurige set van features gebruikt\autocite{}. %beirman
 
-Random Forest is een combinatie van learning-methoden bestaande uit een verzameling van decision trees, hierbij wordt elke decision tree getrained op een willekeurige subset in de trainingsdata samen met een willekeurige set features. Uiteindelijke classificatie zal bepaald worden doormiddel van voting over de individuele trees. 
-Het combineren van decision trees zorgt voor verschillende voordelen. 
-Er is een laag aantal controle en model parameters. Het model is bestemt tegen overfitting dit is wanneer het te specifiek gaat leren van zijn trainingsdata waardoor hij nieuwe patronen niet herkent. Nadelen van het model zijn dat doordat er vele decision trees gebruikt worden bij het maken van een beslissing het lastig te achterhalen is waarom het een beslissing genomen heeft.\textcite{} % https://ieeexplore.ieee.org/abstract/document/7307098
+Random forest kan herleid worden tot een verzameling aan boomgebasseerde classfiers, waar elke boom opgebouwd is door een onafhankelijke en identieke vector die willekeurig gekozen is door het model. Voor een gegeven inputvector zal het model een voorspelling geven, hierna wordt de classificatie bepaald door majority voting. In de context van anomaly detectie zal de boom een classificatie geven zoals "normaal" of "anomalie", en de uiteindelijke beslissing is gebasseerd op een meerderheid in stemmen\autocite{}.% https://www.researchgate.net/publication/323135297_Anomaly_detection_using_random_forest_A_performance_revisited
+
+Volgens \textcite{} zijn dit de voor en nadelen van Random Forest binnen de context van anomalie detectie. 
+\begin{itemize}
+    \item \textbf{Voordelen}
+    \begin{itemize}
+        \item Robuust tegen overfitting, dit is wanneer een model zich sterk afstemd op zijn trainingsdata waardoor het niet goed generaliseert naar nieuwe, ongeziene data. 
+        \item expliciete featureselectie is doorgaans niet noodzakelijk, dit is doordat het model efficient om kan gaan met een groot aantal variabelen. 
+    \end{itemize}
+    
+    \item \textbf{Nadelen}
+    \begin{itemize}
+        \item Lage interpreteerbaarheid van het model, doordat de uiteindelijke voorspelling gemaakt wordt door een combinatie van decisiontrees, is het moeilijk om te achterhalen wat de grondslag was van een bepaalde classificatie. 
+        \item Prestaties kunnen dalen bij sterk gecorreleerde feautures in de dataset, dit heeft als gevolg dat de diversiteit tussen de decisiontrees vermindert, wat net een belangrijk onderdeel is van Random Forest. 
+    \end{itemize}
+\end{itemize}
+
+Binnen Random Forest zijn er enkele essentiele parameters die direct invloed hebben op de werking en stabiliteit van het model. Zo staat n_estimators in voor het aantal decision trees die gebruikt zullen worden binnen het ensemble, een hoger aantal bomen verhoogt de stabiliteit van het model maar heeft ook rechtstreeks invloed op de rekencomplexiteit van het model. De max_features parameter staat dan weer in voor hoeveel features willekeurig gekozen zullen worden per splitsing in de decision tree, ook deze parameter heeft directe invloed op de stabiliteit en de rekenkost van het model\autocite{}. %Beirman
+
+%SVM
+Support Vector Machine is een supervised classificatiealgoritme dat een scheidingslijn genaamd de hyperplane trekt tussen twee klassen. Bij binaire classificatie zoals het onderscheid maken tussen normaal en anomalie, probeert SVM de grens te vinden die de 2 klassen scheid met een zo groot mogelijke marge. De marge is de afstand tussen de beslissingsgrens en de datapunten van beide klassen die zicht het dichts bij bevinden, deze datapunten worden ook wel de support vectors genoemd. Door de marge zo groot mogelijk te maken kan SVM beter generaliseren naar nieuwe data en is het minder gevoelig aan kleine variaties in de set.% (Cortes & Vapnik, 1995)
+
+Volgens \textcite{} zijn dit de voor en nadelen van Support Vector Machine binnen de context van anomalie detectie. 
+\begin{itemize}
+    \item \textbf{Voordelen}
+    \begin{itemize}
+        \item Sterk in hoog dimensionale datasets, aangezien het model sterk overweg kan met groot aantal features binnen de data. 
+        \item Capabel model voor het aanduiden van grenzen tussen classes in de data. 
+    \end{itemize}
+    
+    \item \textbf{Nadelen}
+    \begin{itemize}
+        \item Lage interpreteerbaarheid van het model het is moeilijk om te achterhalen wat de grondslag was van een bepaalde classificatie. 
+        \item Gevoelig aan parameter settings en trainingstijd kan exponentieel stijgen bij grote datasets. 
+    \end{itemize}
+\end{itemize}
 
 \subsubsection{Unsupervised ML modellen}
-Isolation Forest vertekt vanuit het principe dat normaal gedrag dominant is in de dataset en anomalieën eenvoudiger te isoleren zijn. In tegenstelling tot andere modellen die een basis profiel opmaken van normale data, focust isolation forest op de isolatie van afwijkende datapunten. Isolation Forest creeërt een groot aantal binaire decisiontrees door op elke knoop een willekeurige feature met een willekeurige splitswaarde te selecteren. 
-Voor elk datapunt wordt afzonderlijk de padlengte berekend om een punt te isoleren. Doordat IF ervan uitgaat dat anomalieën zeldzaam zijn, worden deze datapunten in minder splitsingen geïsoleerd. Vervolgens worden de padlengten genormaliseerd en deelt het model een anomaliescore uit tussen 0 en 1. Hierbij duiden hoge waarde dicht tegen 1 aan op afwijkend gedrag. % https://www.sciencedirect.com/science/article/pii/S0167865521002063?casa_token=PQ0fl5igWDAAAAAA:NPOoHrZEZYY2x2o7waPmuS_iWifXRbefHMnEMoMi4Q82-WzQVJTTC-IZEdVuH2fTXlaO7c1n5Q
+Isoalation Forest is een unsupervised anomaliedetectiemethode dat vertrekt vanuit een andere invalshoek ten opzichte van andere ML modellen gebruikt voor anomaliedetectie: in plaats van een profiel op te bouwen van hoe normaal gedrag binnen de data eruit ziet zal isolation forest er op focussen om afwijkende datapunten te isoleren. Dit is mogelijk doordat er binnen Isolation Forest er wordt vanuitgegaan dat anomalieën doorgaans zeldzaam zijn en afwijkende waarden bezitten\autocite{}.%BRON: Liu et al., 2008
+
+Het algoritme bouwt een vooraf gedefineerd aantal binaire decisiontrees, in elke decisiontree wordt er iteratief een willekeurige feature en een willekeurige splitswaarde geselecteerd om datapunten te kunnen scheiden. De nodige padlengte die nodig zal zijn voor een datapunt volledig te kunnen isoleren wordt gemeten en vervolgens genormaliseerd tot een anomalie score tussen 0 en 1. Datapunten met een korte gemiddelde padlengte over alle bomen heen en dus snel konden geisoleerd worden krijgen een hoge anomaliescore\autocite{}.%bron Lesouple  
+
+Volgens \textcite{} zijn dit de voor en nadelen van Isolation Forest binnen de context van anomalie detectie. %bron Isolation Forest
+\begin{itemize}
+    \item \textbf{Voordelen}
+    \begin{itemize}
+        \item Zeer efficiënt en schaalbaar, doordat het algoritme een lineaire tijdcomplexiteit heeft en weinig geheugen vereist, kan het goed toegepast worden op grote datasets en data met veel dimensies. 
+        \item Effectief in het detecteren van anomalieën, omdat het model anomalieën direct probeert te isoleren in plaats van normale data te modelleren, waardoor afwijkende punten sneller herkend worden. 
+    \end{itemize}
+    
+    \item \textbf{Nadelen}
+    \begin{itemize}
+        \item Moeilijkheden bij overlappende of dichte clusters, wanneer anomalieën dicht bij normale data liggen of in grote groepen voorkomen, worden ze minder goed geïsoleerd en dus moeilijker gedetecteerd. 
+        \item Gevoelig voor data-eigenschappen zoals dimensionaliteit en sample size, waardoor prestaties kunnen afnemen bij veel irrelevante features of een ongunstige keuze van de subsample grootte. 
+    \end{itemize}
+\end{itemize}
 
 Local Outlier Factor is een unsupervised anomaliedetectiemethode die afwijkende datapunten detecteert op basis van dichtheidsverschillen. LOF evalueert een datapunt relatief ten opzichte van zijn k-dichtste buren. 
 Het algoritme start met het berekenen van de k-distance dit is de afstand tussen het datapunt en de k-de dichtste buur. Vervolgens wordt de reachability distance berekend, deze metric dient om instabiliteit in de meting te voorkomen zodat 2 punten die dicht bij elkaar liggen niet automatisch als normaal worden gezien. 
-De uiteindelijke LOF score is de verhouding tussen de gemiddelde locale dichtheid van de buren van het datapunt en de lokale dichtheid van het punt zelf. Wanneer de LOF-waarde zakt onder 1 wijst dit op een lagere dichtheid ten opzichte van andere punten en dus een mogelijke anomalie. %https://towardsdatascience.com/how-to-perform-anomaly-detection-with-the-lof-algorithm-4fc31cee14c4/
+De uiteindelijke LOF score is de verhouding tussen de gemiddelde lokale dichtheid van de buren van het datapunt en de lokale dichtheid van het punt zelf. Wanneer de LOF-waarde zakt onder 1 wijst dit op een lagere dichtheid ten opzichte van andere punten en dus een mogelijke anomalie \autocite{LOF_TowardsDataScience_2026}. %https://towardsdatascience.com/how-to-perform-anomaly-detection-with-the-lof-algorithm-4fc31cee14c4/
 
+De voornaamste parameter van LOF is k dit staat in voor het aantal buren van een datpunt waar het model zal evalueren. Een kleinere K-waarde maakt het model gevoeliger voor lokale variaties, een grotere k-waarde maakt het model beter bestendig tegen false positives maar ook minder gevoelig voor lokale anomalieën. 
+
+Volgens \textcite{} zijn dit de voor en nadelen van Isolation Forest binnen de context van anomalie detectie. %bron LAWAL?
+\begin{itemize}
+    \item \textbf{Voordelen}
+    \begin{itemize}
+        \item Effectief in het detecteren van lokale anomalieën, doordat het model rekening houdt met de dichtheid van naburige datapunten en afwijkingen identificeert ten opzichte van de directe omgeving. 
+        \item Geen gelabelde data vereist, aangezien LOF een unsupervised algoritme is dat anomalieën detecteert op basis van structurele eigenschappen van de dataset. 
+    \end{itemize}
+    
+    \item \textbf{Nadelen}
+    \begin{itemize}
+        \item Gevoelig voor parameterkeuze, in het bijzonder het aantal buren (k), wat een grote invloed heeft op de prestaties en kan leiden tot foutieve classificaties. 
+        \item Kans op false positives aan de randen van clusters, doordat punten met een lagere dichtheid aan de grens van normale clusters ten onrechte als anomalieën kunnen worden beschouwd. 
+    \end{itemize}
+\end{itemize}
 \subsubsection{Semi-supervised ML modellen}
 One-Class SVM is een semi-supervised benadering ontworpen om een beslissingsgrens te leren kennen rond een dataset met voornamelijk normale observaties. Het verschil met een klassieke SVM is dat deze meerdere klassen onderscheiden terwijl OC-SVM een grens opzet die het normale gedrag omvat. Nieuwe datapunten die buiten deze grens vallen worden gezien als een anomalie. 
-Door het gebruik van Radial Basis Function kan OC-SVM niet-lineare grenzen modelleren. De gevoeligheid van het model kan worden bepaald doormiddel van een parameter, deze parameter is de bovengrens voor het toegestane percentage outliers die zich in de trainingsdata bevinden. Hierdoor vind het model in zijn trainingsdata een evenwicht tussen false positives en false negatives. 
-Dit model is geschikt voor situaties waarin afwijkend gedrag eerder zeldzaam is en er gelabelde voorbeelden van aanwezig zijn. %https://www.shadecoder.com/topics/one-class-svm-a-comprehensive-guide-for-2025 
+Door het gebruik van Rad+-ial Basis Function kan OC-SVM niet-lineare grenzen modelleren. De gevoeligheid van het model kan worden bepaald door middel van een parameter, deze parameter is de bovengrens voor het toegestane percentage outliers die zich in de trainingsdata bevinden. Hierdoor vind het model in zijn trainingsdata een evenwicht tussen false positives en false negatives. 
+Dit model is geschikt voor situaties waarin afwijkend gedrag eerder zeldzaam is en er gelabelde voorbeelden van aanwezig zijn\autocite{Shadecoder_OneClassSVM_2026}. %https://www.shadecoder.com/topics/one-class-svm-a-comprehensive-guide-for-2025 
 
+\subsection{Het belang van tijd in anomaliedetectie}%
+\label{subsec:belang-tijd}
+Tijd speelt een centrale rol in anomaliedetectie voor web- en api verkeer. Aanvallen zoals DDoS, credential stuffing en API-misbruik zullen zelden te detecteren zijn op basis van één enkele request. Deze aanvallen zullen eerder pas zichtbaar zijn voor een model wanneer ze worden geanalyseerd op een bepaalde tijdsspanne\autocite{Schummer2024}.%  Machine Learning-Based Network Anomaly Detection https://www.researchgate.net/publication/387151644_Machine_Learning-Based_Network_Anomaly_Detection_Design_Implementation_and_Evaluation
+Om gedragsmatige patronen te kunnen detecteren wordt ruwe logdata samengevoegd over tijdsvensters. Dit is wanneer requests van eenzelfde client, endpoint of sessie samengebracht worden binnen een interval, dit kan bijvoorbeeld tussen de 1 en 5 minuten zijn. Per tijdsvenster wordt vervolgens de relevante features geanalysseerd\autocite{Sowmya2023}. % https://www.researchgate.net/publication/372514849_API_Traffic_Anomaly_Detection_in_Microservice_Architecture
 
+De keuze van tijdsvenster is afhankelijk van de data waarop het ML model gebruikt zal worden, doorgaans zijn er twee mogelijkheden: tumbling windows en sliding windows. Bij tumbling windows worden er gebruik gemaakt van niet overlappende intervallen. Bij sliding windows is er sprake van een continue verschuiving van het interval om zo een gelijkmatiger beeld te geven van de gedragsverandering. Voor real-time detectie is sliding window aanbevolen doordat deze sneller reageren op plotse gedragswijzigingen\autocite{Schummer2024}. % Machine Learning-Based Network Anomaly Detection https://www.researchgate.net/publication/387151644_Machine_Learning-Based_Network_Anomaly_Detection_Design_Implementation_and_Evaluation
 
-
-\section{Feature engineering voor anomaliedetectie}
+\section{Feature selectie en engineering voor anomaliedetectie}
 \label{sec:ML-methoden-anomalie}
 \subsection{Belang van data quality}
 \label{subsec:toegevoegde-waarde-ML}
 % Uitleggen waarom goede data data essentieel is voor ML success 
-Anomaliedetectie binnen Web- en API-beveiliging is sterk afhankelijk van de beschikbare data, slechte data kwaliteit zoals onvolledige, inconsistente API metrics zorgen voor onnauwkeurige resultaten en verhogen het risico op false positives en negatives. Het verzekeren van data integriteit door correcte collectie, opslag en preprocessing is cruciaal voor effectieve anomalie detectie \Autocite{Meegle2025}.
-
+Anomaliedetectie binnen Web- en API-beveiliging is sterk afhankelijk van de beschikbare data. Slechte data kwaliteit zoals onvolledige, inconsistente API metrics zorgen voor onnauwkeurige resultaten en verhogen het risico op false positives en negatives. Het verzekeren van data integriteit door correcte collectie, opslag en preprocessing is cruciaal voor effectieve anomalie detectie \Autocite{Meegle2025}.
 
 \subsection{Essentiële features uit Akamai logs}
 \label{subsec:toegevoegde-waarde-ML}
 % Lijst de belangrijkste features voor anomaly detection in Web en API-context
+Logvelden zoals een IP-adres of een geo-locatie zeggen weinig op zichzelf voor een machine-learningmodel. De meerwaarde onstaat doormiddel van deze velden te aggregeren naar features die gedragspatronen tonen over een tijdsvenster. Daarom is feature engineering een bepalende stap voor de detectiecapaciteit van het model te verhogen\autocite{Sowmya2023}. 
+
+Zoals eerder beschreven in sectie~\ref{subsec:belang-tijd} is het belangrijk om alle features te berekenen over een tijdsvenster, gegroepeerd per client-ip. Aangezien binnen dit onderzoek 2 aparte modellen zullen geimplementeerd worden, één voor webverkeer en één voor API-verkeer, splitsen we de features op in 2 groepen: web-specififeke features en api-specififeke features. 
+
+\subsubsection{API-specifieke features}
+Voor het anomaliedetectie model voor API-verkeer, wordt er vertrokken van een set ruwe logvelden die rechtstreekse relevant zijn aan de API-endpoints: client IP-adres, API-endpoint, response data size, HTTP-statuscode, timestamp en request type. Deze kenmerken worden niet rechtstreeks gebruikt als input voor het model maar, dienen eerst te worden geaggregeerd over een tijdsvenster en dit expliciet per client-IP~\autocite{Sowmya2023}. 
+
+De eerste kernfeature voor het model is api-access-unique dit is de verhouding tussen het aantal uniek aangesproken APIs en het totale aantal API calls binnen het tijdsvenster. Een lage verhouding wijst erop dat relatief veel requests naar weinig verschillende endpoints gaan, dit kan wijzen op een brute force aanval of end point abuse~\autocite{Sowmya2023}. 
+
+De tweede kernfeature is total-calls dit is relevant als volumetrische indicator, een plotselinge stijging van requests per client-IP kan wijzen op request flooding of misbruik~\autocite{Sowmya2023}. 
+
+Voor het detecteren van datalekken is het relevant om de totale hoeveelheid verzonden response bytes te berekenen in een tijdsvenster. Verdachte hoeveelheden data dat geexfiltreerd wordt kan wijzen op misbruik van de api~\autocite{Sowmya2023}.
+
+Een vierde en laatste feature is het aantal mislukte requests, dit zijn dus alle requests van het formaat 4xx deze bieden een sterke indicatie of verkennend gedrag van een aanval~\autocite{OWASP2023}. 
 
 
+
+
+\subsubsection{Web-specifieke features}
+Voor het model dat anomalieën detecteert in HTTP web-verkeer, wordt vertrokken vanaf basis webserverlogvelden zoals: source IP, timestamp, method, URI, referrer. Hier zullen we de gegevens groeperen per client-IP binnen een tijdsvenster. Deze kenmerken zullen nog verder aangevuld worden met afgeleide features die het gedrag van deze individuele clients beschrijven~\autocite{Chua2024}. 
+
+Voor de afgeleide features maken we een onderscheid in frequentiekenmerken en inhoudelijke kenmerken: 
+
+Frequentiekenmerken beschrijven hoe intensief en op welke manier een client het systeem gebruikt binnen een bepaald tijdsvenster. Deze kenmerken worden berekend per IP-adres en geven inzicht in het algemene gebruikspatroon van een client.
+
+De belangrijkste frequentiekenmerken zijn:
+\begin{itemize}
+    \item Het aantal requests per IP binnen het tijdsvenster
+    \item De verdeling van statuscodes (zoals 2xx, 4xx en 5xx)
+\end{itemize}
+
+Deze features maken het mogelijk om afwijkend gedrag te detecteren, zoals:
+\begin{itemize}
+    \item Een abnormaal hoge requestfrequentie, wat kan wijzen op scraping of DDoS-achtige patronen
+    \item Een verhoogde foutgraad (bijvoorbeeld veel 404- of 403-responses), wat kan duiden op scanning of brute-forcepogingen
+\end{itemize}
+
+\subsubsection{Inhoudelijke kenmerken}
+
+Naast frequentie speelt ook de inhoud van de requests een belangrijke rol bij het detecteren van anomalieën. Daarom worden bijkomende kenmerken afgeleid uit de URI en andere requestvelden~\autocite{Chua2024}.
+
+De belangrijkste inhoudelijke kenmerken zijn:
+\begin{itemize}
+    \item \textbf{URI\_length}: de lengte van de opgevraagde URI
+    \item \textbf{URI\_occurrences}: de frequentie van specifieke URI’s of patronen binnen één IP
+    \item \textbf{IOC\_occurrences}: de aanwezigheid van verdachte patronen (Indicators of Compromise) in URI’s of User-Agent strings
+\end{itemize}
+
+Deze kenmerken zijn relevant omdat kwaadaardige requests vaak afwijkende patronen bevatten, zoals abnormaal lange URI’s, herhaald gebruik van specifieke endpoints of de aanwezigheid van bekende aanvalspatronen~\autocite{Chua2024}.
 
 \section{Evaluatie en performance metrics}
 \label{sec:ML-methoden-anomalie}
@@ -132,7 +257,7 @@ De keuze in Evaluatiecriteria is afhankelijk van toepassingscontext als de kenme
 Bij binaire classificatie, zoals anomaliedetectie, worden precision en recall gebruikt om de prestaties van een model te evalueren, nadrukkelijk bij niet gelijk verdeelde datasets. In dit geval zijn anomaliteiten zeldaam ten opzichte van normaal gedrag.
 Precision meet het aantal correct gedetecteerde anomalieën ten opzichte van alle als anomalie geclassificeerde observaties. Recall meet het aandeel correct gedetecteerde anomalieën ten opzichte van de werkelijke anomalieën. 
 Doordat er een class-imbalance is focust Precision en Recall zich op de minderheidsklasse in dit geval de anomalieën. 
-De F1-score is een gebalanceerde metric doordat het het harmonisch gemiddelde berekent van precision en recall dit zorgt ervoor dat de F1-score slechts stijgt wanneer beide onderdelen stijgen. %bron https://aman.ai/primers/ai/evaluation-metrics/?
+De F1-score is een gebalanceerde metric doordat het het harmonisch gemiddelde berekent van precision en recall dit zorgt ervoor dat de F1-score slechts stijgt wanneer beide onderdelen stijgen\autocite{Chadha2020DistilledEvaluationMetrics}. %bron https://aman.ai/primers/ai/evaluation-metrics/?
 
 \section{Conclusie literatuurstudie}
 \label{sec:ML-methoden-anomalie}

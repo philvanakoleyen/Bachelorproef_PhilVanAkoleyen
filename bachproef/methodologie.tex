@@ -31,14 +31,14 @@
 \subsection{Requirementsanalyse}
 \label{subsec:Requirementsanalyse}
 %Het doel van dit onderdeel is om in een interview met het evolane team de functionele en niet-functionele requirements zijn voor het anomaliedetectiesysteem. 
-
+Voor dit deel van het onderzoek werden leden van het securityteam ondervraagd naar wat voor hun de functionele en niet functionele vereisten zijn voor het anomaliedetectiesysteem. 
 \subsection{Dataverzameling en normalisatie}
 \label{subsec:dataverzameling en normalisatie}
 %Het doel van dit onderdeel is om een datastroom op te zetten van de Akamai access logs zodat we python kunnen gebruiken voor deze op te schonen en het doel is om een gestructureerde set op te bouwen in CSV formaat. 
 
 Om een reproduceerbare en herbruikbare dataset op te bouwen, wordt een datastroom opgezet op basis van Akamai access logs. Deze logs bevatten onder meer informatie over client-IP-adressen, gebruikte API-endpoints, HTTP-methodes, statuscodes, responsegroottes en tijdstempels. Indien relevant worden bijkomende SIEM-events geïntegreerd om extra context toe te voegen.
 
-De ruwe loggegevens worden geëxporteerd en verwerkt met behulp van Python. De library \texttt{pandas} wordt gebruikt voor data cleaning, parsing en preprocessing. Dit omvat onder andere het verwijderen van onvolledige of corrupte records, het uniformeren van tijdsformaten, het omzetten van categorische variabelen en het structureren van de data in een consistent schema.
+De ruwe loggegevens worden verwerkt met behulp van Python. De library \texttt{pandas} wordt gebruikt voor data cleaning, parsing en preprocessing. Dit omvat onder andere het verwijderen van onvolledige of corrupte records, het uniformeren van tijdsformaten, het omzetten van categorische variabelen en het structureren van de data in een consistent schema.
 
 Na normalisatie worden de gegevens opgeslagen in een gestructureerd CSV-formaat. Deze gestructureerde dataset vormt de basis voor verdere analyse, feature engineering en modeltraining binnen het proof-of-concept.
 
@@ -78,10 +78,12 @@ Na een vergelijkende analyse wordt één primair model geselecteerd voor impleme
 \subsection{proof-of-concept}
 \label{subsec:Poc}
 % Implementeren van de gekozen ML modellen uit de vorige stap en het evalueren van de performantie en het aantal false positives. En onderzoeken hoe het model optimaal geimplementeerd kan worden met het security platform van Evolane dus doorsturen van alerts naar slack en het ontwikkelen van een eenvoudig dashboard voor visualisatie. 
+Om de theoretische inzichten te toetsen wordt er een Proof of Concept uitgewerkt waarin een anomaliedetectiemethode wordt geïmplementeerd. De detectieperformantie wordt geëvalueerd door middel van de F1 score voor het model te bepalen. Deze metric geeft ons de balans tussen het correct detecteren van de anomalieën en het vermijden van foutieve detecties. Om de F1 score te kunnen berekenen bepalen we eerst de precision en recall van het model. Om het gebruik van het Proof-of-Concept verder te kunnen staven berekenen we ook de false positive ratio (FPR). Dit is essentieel voor het bepalen in welke mate het prototype het aantal false positives kan verminderen ten opzichte van de huidige rule-based detectiebenadering binnen Evolane. Naast de technische evaluatie wordt er ook gekeken naar de operationele integratie. Hierbij onderzoeken we hoe het prototype gekoppeld kan worden aan het security platform van Evolane, en hoe we de alerts kunnen doorsturen naar het ticketsysteem Slack. Hiernaast wordt er ook een eenvoudig interface of dashboard voorzien Grafana voor het visualiseren van de anomalieën.  
 
 \subsection{Conclusie en advies}
 \label{subsec:conclusie en advies}
 % Analyse opbouwen in welke mate het machine learning gebasseerd anomaliedetectiesysteem een meerwaarde is binnen de security omgeving van Evolane en het formuleren van advies. 
+Tot slot wordt er een conclusie geformuleerd op basis van de bekomen resultaten. Hierbij wordt nagegaan in welke mate een machine-learning gedreven aanpak een meerwaarde biedt ten opzicht van klassieke detectie mechanismen. Op basis van de analyse wordt een onderbouwd advies geformuleerd met aandacht voor toepasbaarheid, voordelen, beperkingen en mogelijke vervolgstappen.
 
 
 
