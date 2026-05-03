@@ -1,0 +1,446 @@
+\chapter{\IfLanguageName{dutch}{Proof of Concept}{Proof of Concept}} 
+\label{ch:proof-of-concept}
+
+Dit hoofdstuk beschrijft de volledige opzet en implementatie van het proof-of-concept voor het machine learning-gedreven anomaliedetectiesysteem binnen de omgeving van evolane specifiek voor web verkeer. 
+Hier wordt opeenvolgend de context en dataomgeving van Evolane toegelicht, dataverzameling en normalisatie besproken, feature engineering uitgewerkt, de modelkeuze onderbouwd, het trainingsproces beschreven en tot slot de operationele implementatie binnen de bestaande omgeving van Evolane geschetst.
+
+\section{Context, omgeving en data}
+\label{sec:context-omgeving-data}
+
+
+\subsection{De Evolane-omgeving}
+\label{subsec:evolane-omgeving}
+
+Evolane beveiligt het web- verkeer van haar klanten via het Akamai App & API protector platform. Inkomende HTTP-requesten komen binnen op de Akamai edge servers waarna ze worden geëvalueerd op basis van regelgebasseerde beveiligingscontroles. Elke request genereert een gedetailleerd access log dat informatie bevat over het request. Deze access logs bevatten onder andere het client-IP-adres, opgevraagde pad, de HTTP-methode, dee statuscode, de responsegrootte, de user-agent, geolocatie en eventueel een Akamai beveiligingsregel indien deze geraakt zou zijn. 
+
+De testomgeving die door Evolane ter beschikking werd gesteld voor dit proof of concept bevat uitsluitend webverkeer. Om die reden ligt de focus binnen dit proof of concept op de detectie van afwijkend gedrag binnen webverkeer. Daarnaast is het ook de doelstelling om binnen de beschikbare tijd van deze bachelorproef een degelijk werkbaar proof of concept te realiseren.
+%oplijsting maken rond de features in de logs kijken of een tabel dit niet beter illustreert
+\subsection{De datastream naar Elasticsearch}
+\label{subsec:datastream-elasticsearch}
+
+De Akamai access logs worden via een geconfigureerde datastream doorgestuurd naar een Elasticsearch-cluster dat door Evolane wordt beheerd. Deze datastream schrijft de logs weg naar een index in de cluster met het patroon \textit{datastream2-*}. Een enkel HTTP-request binnen deze index bevat de volledige set aan velden die Akamai per request genereert/opslaat. De belangrijkste velden binnen dit onderzoek zijn de volgende: 
+
+\begin{itemize}
+    \item \textbf{reqTimeSec}: het tijdstip van de request als Unix-epoch timestamp in milliseconden
+    \item \textbf{cliIP}: het IP-adres van de client
+    \item \textbf{reqPath}: het opgevraagde URI-pad
+    \item \textbf{reqMethod}: de gebruikte HTTP-methode (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE )
+    \item \textbf{statusCode}: de HTTP-statuscode van het antwoord
+    \item \textbf{bytes} en \textbf{totalBytes}: de grootte van de response in bytes
+    \item \textbf{UA} en \textbf{user\_agent}: de user-agent string en een user-agent object met informatie over het besturingssysteem, browser en het apparaat
+    \item \textbf{country}, \textbf{city}, \textbf{state}: geolocatiegegevens van de client
+    \item \textbf{referer}: de referrer-header van de request
+    \item \textbf{queryStr}: de query string parameters
+    \item \textbf{reqHost} en \textbf{reqPort}: de host en poort waarop de request binnenkwam
+    \item \textbf{tlsVersion}: de TLS-versie
+    \item \textbf{cacheStatus}: of de response uit de cache werd geserveerd
+    \item \textbf{transferTimeMSec} en \textbf{turnAroundTimeMSec}: timinggegevens van de request
+    \item \textbf{rspContentType}: het content type van het antwoord
+    \item \textbf{aapRule}: een gestructureerd veld dat aangeeft welke Akamai-beveiligingsregels zijn getriggerd, inclusief de regelcategorie en het bijhorende beleid
+\end{itemize}
+
+Het \textit{aapRule}-veld is relevant voor dit onderzoek. Wanneer de velden \textit{rules} en \textit{category} leeg zijn, wilt dit zeggen dat Akamai geen beveiligingsregel heeft gevonden voor dit specifieke request. Dit is het verkeer dat we specifiek willen observeren of we hier anomaliën in kunnen vinden. Requests die door Akamai APP & API protector niet als verdacht zijn aangemerkt, maar mogelijk wel afwijkend gedrag vertonen. 
+
+
+%Training model uitleggen 
+\subsection{Trainingsdata}
+\label{subsec:trainingsdata}
+
+Voor het trainen van het model is een dataset opgehaald uit de elasticsearch-cluster over de periode van 18 maart 2026 tot en met 2 april 2026. Dit is zo gekozen aangezien dit het hoogst mogelijke aantal access logs waren die in één keer opgehaald konden worden, door dat de elasticsearch de logs maar 14 dagen bewaard. 
+Deze dataset is voldoende representatief voor het normale verkeer van de Evolane website te kunnen beschrijven aangezien het zowel weekdagen als weekenddagen omvat waar het verkeer mogelijks wat kan verschillen. De trainigsdataset bevat alle requests uit deze periode inclusief de requests waarvoor Akamai wel of geen beveiligingsregel heeft getriggerd. De Akamai regelvelden \textit{rules} en \textit{category} zullen niet gebruikt worden als effectieve input voor het model, maar dienen achteraf ter referentie om de vergelijking te kunnen maken met wat het model detecteerde en wat Akamai detecteerde.
+
+\section{Dataverzameling en normalisatie} 
+\label{sec:dataverzameling-normalisatie}
+
+\subsection{Ophalen van de logdata} 
+\label{subsec:ophalen-logdata}
+
+Het ophalen van de logs gebeurt op twee verschillende manieren, afhankelijk van het doel. Continu voor de real-time detectiepipeline of éénmalig voor het samenstellen van de trainingsdata. 
+
+\subsubsection{Trainingsdata} 
+\label{subsubsec:ophalen-trainingsdata}
+
+Voor de trainingsdata van het model wordt er eenmalig een dataset opgehaald uit de elasticsearch van Evolane. Deze wordt vervolgens opgeslagen in een CSV bestand zodat we hier later het model op kunnen trainen. Dit CSV-bestand bevat alle beschikbare Akamai-logvelden per request die opgeslagen zijn in de elasticsearch. 
+Het trainingsscript is instaat dit CSV bestand in te lezen, het uitvoeren van preproccesing en feature engineering en tot slot het model te trainen op de data. Doordat de trainingsdata wordt opgeslagen in een CSV is het mogelijk om het model hierop opnieuw te trainen zonder een verbinding te moeten maken met elasticsearch. 
+
+\subsubsection{Real-time pipeline} 
+\label{subsubsec:ophalen-pipeline}
+
+De operationele pipeline (\textit{anomaly\_pipeline.py}) is geconfigureerd om logdata continu rechtstreeks uit de elasticsearch op te halen. Standaard zal het elke 30 seconden (configureerbaar in \textit{config.yaml}) opnieuw een poll uitvoeren naar nieuwe logs die binnengekomen zijn in elasticsearch.
+Hierbij wordt er gebruik gemaakt van de \textit{search\_after}-API van Elasticsearch voor paginatie: de pipeline onthoudt wat de laatste query was die hij op elasticsearch succesvol heeft uitgevoerd en vraagt bij de volgende poll enkel een recentere page op, dit wordt zo gedaan om te voorkomen dat herhaaldelijk dezelfde data zal worden opgehaald. 
+
+De query voor het ophalen van logs maakt gebruik van het \textit{reqTimeSec}-veld en zal enkel requests ophalen die nieuwer zijn dan de timestamp in de buffer van de pipeline. Intern wordt het tijdsveld bijgehouden als Unix-epoch in seconden en bij de query wordt deze terug omgezet naar milliseconden het formaat dat elasticsearch verwacht. 
+
+In de pipeline wordt er expliciet gespecifieerd welke bronvelden uit elasticsearch opgeslagen worden, dit is om het geheugengebruik van de pipeline zo goed mogelijk te beheren. 
+
+\subsection{Preprocessing en normalisatie} 
+\label{subsec:preprocessing-normalisatie}
+
+Voor de ruwe logdata geschikt is voor feature engineering ondergaat deze een reeks preprocessing-stappen die geïmplementeerd zijn in de \textit{preprocess\_logs}-functie (voor de real-time pipeline) en de \textit{preprocess\_csv}-functie (voor het trainingsscript):
+
+\textbf{Tijdstempelnormalisatie.} Het veld \textit{reqTimeSec} kan afhankelijk van de Elasticsearch-configuratie binnenkomen als seconden of als milliseconden. Het script detecteert automatisch welk formaat wordt gebruikt door de mediaan te controleren: indien deze groter is dan $10^{12}$ wordt aangenomen dat de waarden in milliseconden staan en worden ze gedeeld door 1000. Vervolgens wordt \textit{reqTimeSec} omgezet naar leesbare UTC-timestamp. 
+
+{\small
+\begin{lstlisting}[style=custompython,caption={Detecteren formaat van timestamp},label={lst:dlp-selenium}, captionpos=b, basicstyle=\small\ttfamily]
+df["reqTimeSec"] = pd.to_numeric(df["reqTimeSec"], errors="coerce")
+df.dropna(subset=["reqTimeSec"], inplace=True)
+
+if df["reqTimeSec"].median() > 1e12:
+    logging.info("reqTimeSec in milliseconden, omzetten naar seconden")
+    df["reqTimeSec"] = df["reqTimeSec"] / 1000.0
+
+df["timestamp"] = pd.to_datetime(df["reqTimeSec"], unit="s", utc=True)
+\end{lstlisting}
+}
+
+\textbf{Numerieke velden.} Velden zoals \textit{statusCode}, \textit{bytes}, \textit{objSize}, \textit{transferTimeMSec}, \textit{turnAroundTimeMSec},\textit{totalBytes} en \textit{rspContentLen} worden gecast naar numerieke waarden zodat deze door het model verwerkt kunnen worden. Ontbrekende/ongeldige waarden worden eerst omgezet naar NaN en vervolgens tot nul.
+
+\textbf{User-agent ontleed.} Het \textit{user\_agent}-veld bevat een dictionary-achtige string met informatie over het besturingssysteem, de browser en het apparaat gebruikt door de client. Deze wordt ontleed in drie afzonderlijke kolommen: \textit{os\_name}, \textit{browser\_name} en \textit{device\_name}. Bij ongeldige of ontbrekende waarden worden standaardwaarde: (\enquote{Unknown}) toegekend aan de features. Dit wordt uitgevoerd door de functie: \textit{parse_user_agent_field}.
+
+\textbf{Akamai-regel ontleed.} Het \textit{aapRule}-veld wordt op vergelijkbare wijze ontleed als de User-agent. Hieruit worden vier afgeleide velden berekend: een lijst van getriggerde regels (\textit{rules\_list}), een boolean die aangeeft of er een regel is getriggerd (\textit{has\_rule}), een boolean die aangeeft of het om een bot-gerelateerde regel gaat (\textit{is\_bot\_rule}) en het totaal aantal getriggerde regels (\textit{rule\_count}). Deze waarden worden ter correlatie gebruikt en niet als features voor het model. 
+
+\textbf{Filtering van monitoring- en SLA-verkeer.} Bepaalde user-agents en request-paden worden uitgefilterd om te voorkomen dat monitoring- en health-check-verkeer het model beïnvloedt. Het \textit{config.yaml} specificeert welke user-agents (zoals \textit{Akamai\_Site\_Analyzer} en \textit{updown.io}) en paden (zoals \textit{sla-test.html}, \textit{health} en \textit{healthcheck}) moeten worden uitgesloten door de pipeline.
+
+\textbf{Afgeleide velden.} Tot slot worden bijkomende velden berekend die later dienen als basis voor de feature engineering: de lengte van het URI-pad (\textit{uri\_length}), het request een query string bevat (\textit{has\_query\_string}), of er een referrer aanwezig is (\textit{has\_referer}), de statuscodeklasse als variabele met een categorie (\textit{status\_class}: 2xx, 3xx, 4xx of 5xx) en tot slot of het request via HTTPS binnenkwam (\textit{is\_https}).
+
+
+
+Na de preprocessing van de data wordt deze nog gesorteerd op wanneer de requests binnen kwamen. 
+
+\section{Feature engineering} 
+\label{sec:feature-engineering}
+
+Zoals beschreven in de literatuurstudie (sectie~\ref{sec:belang-tijd} en~\ref{sec:feature-selectie}) is het belangrijk om ruwe logdata te aggregeren over tijdsvensters en per client-IP, zodat gedragspatronen op deze manier zichtbaar worden. Het proof-of-concept implementeert een sliding window-benadering voor de feature engineering.
+
+\subsection{Sliding window-configuratie} 
+\label{subsec:sliding-window-configuratie}
+
+De feature engineering maakt gebruik van overlappende tijdsvensters met de volgende configuratie:
+
+\begin{itemize}
+    \item \textbf{\textit{Venstergrootte}}: 300 seconden (5 minuten)
+    \item \textbf{\textit{Verschuivingsstap}}: 60 seconden (1 minuut)
+    \item \textbf{\textit{Minimum aantal requests}}: 3 requests per venster per client-IP
+\end{itemize}
+
+De keuze voor een venstergrootte van vijf minuten is gebaseerd op de aanbevelingen uit de literatuur~\autocite{Schummer2024} en biedt een balans tussen het detecteren van kort durende aanvallen en het opvangen van voldoende informatie om het gedrag te kunnen bepalen. De verschuivingsstap van één minuut zorgt ervoor dat het systeem snel reageert op gedragswijzigingen: elke minuut zal de pipeline een nieuw vijf-minuten venster evalueren. Binnen de pipeline worden Client IPs waar minder dan 3 logs voor gevonden zijn niet verwerkt aangezien dit onvoldoende data is om features voor te berekenen. 
+
+Het resultaat van deze stap is een DataFrame waarbij elke rij één combinatie van client-IP en tijdsvenster voorstelt, voorzien van alle berekende features.
+
+\subsection{Frequentie features}
+\label{subsec:frequentiekenmerken}
+
+De frequentie features beschrijven hoe intensief een client het systeem gebruikt binnen een tijdsvenster:
+
+\begin{itemize}
+    \item \textbf{\textit{request\_count}}: het totale aantal requests van het client IP-adres binnen het venster. Een abnormaal hoog aantal kan wijzen op scraping, DDoS-patronen of geautomatiseerde aanvallen.
+    \item \textbf{\textit{requests\_per\_second}}: het aantal requests gedeeld door de duur van het venster (berekend als het verschil tussen de laatste en het eerste timestamp binnen het venster). Deze feature schaalt het volume ten opzichte van de effectieve duur van het venster.
+    \item \textbf{\textit{unique\_paths}}: het aantal unieke URI-paden dat werd aangevraagd door het client ip. Een zeer laag aantal in combinatie met een hoog requestvolume kan wijzen op endpoint hammering.
+    \item \textbf{\textit{path\_diversity\_ratio}}: de verhouding tussen het aantal unieke paden en het totale aantal requests. Een lage ratio wijst op repetitief gedrag gericht op een beperkt aantal endpoints, wat indicatief kan zijn voor brute force- of URI-misbruik.
+\end{itemize}
+
+{\small
+\begin{lstlisting}[style=custompython,caption={Berekenen van frequentie features},label={lst:dlp-selenium}, captionpos=b, basicstyle=\small\ttfamily]
+def compute_window_features(group: pd.DataFrame) -> dict:
+    request_count = len(group)
+
+    window_duration = (group["reqTimeSec"].max() - group["reqTimeSec"].min())
+    rps = request_count / max(window_duration, 1.0)
+
+    unique_paths = group["reqPath"].nunique()
+    path_diversity = unique_paths / request_count if request_count > 0 else 0
+\end{lstlisting}
+}
+
+\subsection{Statuscodedistributie} 
+\label{subsec:statuscodedistributie}
+
+De verdeling van HTTP-statuscodes biedt inzicht in het resultaat van de uitgevoerde requests:
+
+\begin{itemize}
+    \item \textbf{\textit{rate\_2xx}}: het aantal succesvolle requests. Normaal verkeer vertoont doorgaans een 2xx statuscodes.
+    \item \textbf{\textit{rate\_3xx}}: het aantal redirects.
+    \item \textbf{\textit{rate\_4xx}}: het aantal client-fouten (400, 403, 404, enz.). Een verhoogd aantal 4xx-responses kan wijzen op scanning, pad-enumeratie of ongeautoriseerde toegangspogingen~\autocite{OWASP2023}.
+    \item \textbf{\textit{rate\_5xx}}: het aantal server-fouten. Een hoge 5xx-ratio kan duiden op pogingen tot exploitatie die serverfouten veroorzaken.
+\end{itemize}
+
+\subsection{Timing-kenmerken} 
+\label{subsec:timing-kenmerken}
+
+De timing-kenmerken beschrijven het gedrag gehanteerd door het client IP en kunnen het tijdsgebonden patroon tussen requests beschrijven:
+
+\begin{itemize}
+    \item \textbf{\textit{avg\_inter\_request\_time}}: de gemiddelde tijd tussen opeenvolgende requests. Menselijke gebruikers vertonen doorgaans variatie in intervallen, terwijl geautomatiseerde tools vaak meer uniforme intervallen vertonen.
+    \item \textbf{\textit{std\_inter\_request\_time}}: de standaardafwijking van de tussentijden. Een zeer lage standaardafwijking wijst op mechanisch en dus potentieel geautomatiseerd gedrag.
+    \item \textbf{\textit{min\_inter\_request\_time}}: de kortste tijd tussen twee opeenvolgende requests. Extreem korte minimale intervallen kunnen duiden op scripted requests.
+\end{itemize}
+
+{\small
+\begin{lstlisting}[style=custompython,caption={Berekenen van timing features},label={lst:dlp-selenium}, captionpos=b, basicstyle=\small\ttfamily]
+    if n > 1:
+        inter_times = group["reqTimeSec"].diff().dropna() 
+        avg_inter_time = inter_times.mean()
+        std_inter_time = inter_times.std()
+        min_inter_time = inter_times.min()
+    else:
+        avg_inter_time = 0.0
+        std_inter_time = 0.0
+        min_inter_time = 0.0
+\end{lstlisting}
+}
+
+\subsection{Inhoudskenmerken} 
+\label{subsec:inhoudskenmerken}
+
+De inhoudskenmerken beschrijven de aard en omvang van de requests en responses:
+
+\begin{itemize}
+    \item \textbf{\textit{avg\_uri\_length}}: de gemiddelde lengte van de opgevraagde URI's. Aanvallen zoals injection-pogingen genereren vaak abnormaal lange URI's~\autocite{Chua2024}.
+    \item \textbf{\textit{max\_uri\_length}}: de maximale URI-lengte binnen het venster. Een enkele extreem lange URI kan indicatief zijn voor een injection-aanval.
+    \item \textbf{\textit{avg\_response\_bytes}}: de gemiddelde responsgrootte. Afwijkingen in responsgrootte kunnen wijzen op succesvolle data-exfiltratie.
+    \item \textbf{\textit{total\_bytes\_out}}: het totale aantal uitgaande bytes. Een hoog totaalvolume kan wijzen op het ophalen van een abnormale hoeveelheid data.
+    \item \textbf{\textit{avg\_transfer\_time\_ms}}: de gemiddelde transfertijd in milliseconden.
+\end{itemize}
+
+\subsection{Methode- en gedragskenmerken} 
+\label{subsec:methode-gedragskenmerken}
+
+\begin{itemize}
+    \item \textbf{\textit{unique\_methods}}: het aantal verschillende HTTP-methoden dat werd gebruikt. Normaal webverkeer beperkt zich doorgaans tot GET en POST, terwijl aanvallers PUT, DELETE of andere methoden inzetten.
+    \item \textbf{\textit{non\_get\_ratio}}: het aantal niet-GET-requests. Een hoog aantal niet-GET-requests in combinatie met andere afwijkingen kan wijzen op misbruik van de logica.
+    \item \textbf{\textit{unique\_countries}}: het aantal verschillende landen van waaruit requests binnen één venster voor hetzelfde IP werden waargenomen. Hoewel dit veld doorgaans gelijk is aan 1, kan een afwijking wijzen op een anomalie.
+    \item \textbf{\textit{has\_referer\_ratio}}: het aantal requests met een geldige referrer-header. Geautomatiseerde tools sturen vaak geen referrer mee, waardoor een ratio van nul verdacht kan zijn bij een hoog aantal requests.
+    \item \textbf{\textit{has\_query\_ratio}}: het aantal requests met query string parameters.
+    \item \textbf{\textit{https\_ratio}}: het aantal requests dat via HTTPS binnenkwam.
+    \item \textbf{\textit{unique\_content\_types}}: het aantal verschillende response-content-types. Een hoge diversiteit kan wijzen op het systematisch verkennen van de applicatie.
+    \item \textbf{\textit{cache\_hit\_ratio}}: het aantal requests geserveerd uit de cache.
+\end{itemize}
+
+\subsection{User-agent-consistentie}  
+\label{subsec:user-agent-consistentie}
+
+\begin{itemize}
+    \item \textbf{\textit{unique\_browsers}}: het aantal verschillende browsers uit het user agent veld dat werd waargenomen voor hetzelfde IP-adres binnen het venster. Normaal gebruikersverkeer komt doorgaans van één browser; meerdere browsers binnen korte tijd kan wijzen op bot-activiteit of het gebruik van wisselende user-agents om detectie te vermijden.
+    \item \textbf{\textit{unique\_os}}: het aantal verschillende besturingssystemen. Vergelijkbaar met het voorgaande: meerdere besturingssystemen voor één IP-adres is abnormaal.
+\end{itemize}
+
+\subsection{Akamai-correlatie-velden} 
+\label{subsec:akamai-correlatie-velden}
+
+Naast de features die voor het model gebruikt worden, zijn er ook drie correlatie-velden berekend die niet als input voor het model dienen, maar die bij de evaluatie worden gebruikt om de voorspellingen van het model te vergelijken met de bestaande Akamai-detectie:
+
+\begin{itemize}
+    \item \textbf{\textit{\_akamai\_has\_rule\_ratio}}: het aantal requests waarvoor Akamai een beveiligingsregel heeft gevonden.
+    \item \textbf{\textit{\_akamai\_bot\_rule\_ratio}}: het aantal requests waarvoor specifiek een bot-gerelateerde regel is getriggerd.
+    \item \textbf{\textit{\_akamai\_avg\_rule\_count}}: het gemiddelde aantal getriggerde regels per request.
+\end{itemize}
+
+Deze velden worden bewust uitgesloten van de modelinput om te voorkomen dat het model de Akamai-detectie repliceert in plaats van aanvullende anomalieën te ontdekken.
+
+\section{Modelkeuze} 
+\label{sec:modelkeuze}
+
+\subsection{Ongeschiktheid van supervised benaderingen voor de beschikbare data}
+\label{subsec:ongeschiktheid-supervised}
+
+Zoals beschreven in de literatuurstudie vereisen supervised learning-algoritmen een dataset waarbij elk datapunt specifiek gelabeld is als normaal of anomaal gedrag. Binnen de akamai access logs is het \textit{aapRule}-veld het enige veld dat een indicatie geeft over de aard van het requets. Hoewel het lijkt alsof dit veld als label kan dienen is het ongeschikt als grondwaarde voor een supervised learning model. 
+
+Ten eerste is het veld slechts een indicatie van onder andere regelgebaseerde detectie, niet een label dat werkelijk beschrijft of het gaat om een normaal of anomaal requets. Het betekent uitsluitend dat er voor dit specifieke request geen Akamai beveiligingsregel is getriggerd. 
+
+Ten tweede dekt het \textit{aapRule}-veld niet alles van afwijkend gedrag. De Akamai-regels zijn slechts gebaseerd op bestaande aanvalssignaturen, botsignaturen en gekende patronen. Nieuwe aanvalsvormen, subtiele gedragsafwijkingen of voorheen ongekende bots worden mogelijks niet door deze regels gevlagd. Een supervised model getrained op basis van deze regels zou dezelfde blinde vlekken leren en geen meerwaarde bieden ten opzichte van het huidige systeem. 
+
+\subsection{Onderbouwing voor Isolation Forest} 
+\label{subsec:onderbouwing-isolation-forest}
+
+Op basis van de vergelijkende analyse uit de literatuurstudie (tabel~\ref{tab:vergelijking-ml-modellen}) en de kenmerken van de beschikbare data is gekozen voor Isolation Forest als primair anomaliedetectiemodel. 
+
+\textbf{Geschiktheid voor niet-gelabelde data.} De beschikbare trainingsdata is niet gelabeld: er zijn geen expliciete annotaties beschikbaar die aangeven welke requests of sessies daadwerkelijk kwaadaardig zijn. Isolation Forest is een unsupervised algoritme dat geen gelabelde data vereist en in plaats daarvan anomalieën detecteert door het isoleren van datapunten die afwijken van de meerderheid~\autocite{Liu2008}.
+
+\textbf{Efficiëntie en schaalbaarheid.} Isolation Forest beschikt over een lineaire tijdcomplexiteit en een laag geheugenverbruik~\autocite{Lesouple2021}, wat het geschikt maakt voor de verwerking van grote hoeveelheden logdata. Dit is een bepalend voordeel ten opzichte van methoden zoals Local Outlier Factor, die bij grote datasets meer rekentijd vereisen vanwege de berekening van de k-nearest neighbors.
+
+\textbf{Directe isolatie van afwijkingen.} In tegenstelling tot andere methoden die eerst een profiel opbouwen van normaal gedrag en vervolgens afwijkingen daarvan evalueren, focust Isolation Forest zich rechtstreeks op het isoleren van anomalieën. Het algoritme vertrekt vanuit de observatie dat anomalieën zeldzaam zijn en afwijkende kenmerken bezitten, waardoor ze met minder splitsingen in de decision trees geïsoleerd kunnen worden~\autocite{Liu2008}. Deze aanpak maakt het model geschikt voor het detecteren van verschillende soorten anomalieën zonder dat het model vooraf opgedragen moet worden over welke patronen afwijkend zijn.
+
+\textbf{Interpreteerbaarheid via anomaliescores.} Isolation Forest genereert een continue anomaliescore per datapunt, wat de mogelijkheid biedt om anomalieën te rangschikken op basis van hoe ernstig het model deze scoort. Dit is waardevol voor SOC-analisten die dienen prioriteiten op te stellen rond welke aomalieën eerst verder onderzocht worden. 
+
+\textbf{Haalbaarheid binnen de scope van een proof-of-concept.} Alternatieven zoals autoencoders vereisen een aanzienlijke mate van architectuuroptimalisatie en hyperparameter-tuning, wat minder haalbaar is binnen het tijdskader van dit onderzoek. Isolation Forest biedt daarentegen een robuuste baseline met beperkte configuratievereisten.
+
+\subsection{Afweging ten opzichte van alternatieven} 
+\label{subsec:afweging-alternatieven}
+
+Local Outlier Factor (LOF) werd overwogen vanwege de sterke capaciteit voor het detecteren van lokale anomalieën, maar de hogere rekencomplexiteit en de gevoeligheid voor de parameterkeuze van $k$ maken het minder geschikt voor een real-time detectiesysteem die een grote hoeveelheid data dient te verwerken.
+
+One-Class SVM werd overwogen als semi-supervised alternatief. Dit model vereist echter zorgvuldige afstemming van de kernelfunctie en de bijbehorende hyperparameters, en de trainingstijd schaalt niet-lineair met de datasetgrootte, wat de haalbaarheid binnen dit proof-of-concept beperkt.
+
+\section{Training van het model} 
+\label{sec:training-model}
+
+\subsection{Trainingsproces} 
+\label{subsec:trainingsproces}
+
+De training van het Isolation Forest-model wordt uitgevoerd door het script \textit{train\_model.py}. Het trainingsproces verloopt als volgt:
+
+\begin{enumerate}
+    \item \textbf{Inladen van de CSV-data}: de eerder opgehaalde en opgeslagen ruwe logdata wordt ingeladen door het python script.
+    \item \textbf{Preprocessing}: dezelfde preprocessing-pipeline als beschreven in sectie~\ref{subsec:preprocessing-normalisatie} wordt toegepast op de trainingsdata.
+    \item \textbf{Feature engineering}: de sliding window-benadering genereert feature-vectoren over de volledige trainingsperiode.
+    \item \textbf{Standaardisatie}: alle feature-waarden worden geschaald met behulp van een \textit{StandardScaler} uit scikit-learn. Van elke waarde wordt het gemiddelde van die specifieke feature afgetrokken en vervolgens gedeeld door de standaardafwijking van deze feature, dit zorgt ervoor dat elke feature tot een vergelijkbare schaal wordt gebracht. Dit is belangrijk in Isolation Forest aangezien dit algoritme gevoelig is aan aan verschillen tussen features. Wanneer één feature een veel grotere numerieke waarde heeft zoals total_bytes_out, zal deze vaker gekozen worden voor splitsingen. Dit kan ertoe leiden dat features met een kleinere range minder invloed zouden hebben op het model zoals bijvoorbeeld path_diversity_ratio. De standard scaler zorgt er dus voor dat elke feature evenveel doorweegt. 
+    \item \textbf{Modeltraining}: het Isolation Forest-model wordt getraind op de geschaalde trainingsdata.
+\end{enumerate}
+
+In het trainingsscript worden waarden die oneindig zijn (\textit{inf}) of simpelweg ontbreken (\textit{NaN}) voor het stadaardisatie proces vervangen door nul om fouten tijdens de training te voorkomen.
+
+{\small
+\begin{lstlisting}[style=custompython,caption={Gebruik van standardscaler},label={lst:dlp-selenium}, captionpos=b, basicstyle=\small\ttfamily]
+    def score_features(features_df: pd.DataFrame, model, scaler) -> pd.DataFrame:
+
+    X = features_df[MODEL_FEATURES].copy()
+
+    X.replace([np.inf, -np.inf], np.nan, inplace=True)
+    X.fillna(0, inplace=True)
+
+    X_scaled = scaler.transform(X)
+
+    features_df = features_df.copy()
+    features_df["anomaly_score"] = model.decision_function(X_scaled)
+    features_df["is_anomaly"] = model.predict(X_scaled) == -1
+
+    return features_df
+\end{lstlisting}
+}
+
+\subsection{Modelparameters} 
+\label{subsec:modelparameters}
+
+Het Isolation Forest-model wordt geconfigureerd met de volgende parameters:
+
+\begin{itemize}
+    \item \textbf{\textit{n\_estimators = 200}}: het aantal decision trees in het ensemble. Een hoger aantal bomen verhoogt de stabiliteit van de anomaliescores berekend door het model doordat de gemiddelde padlengte over meer bomen wordt berekend. De waarde van 200 biedt een goede balans tussen stabiliteit en rekentijd.
+    \item \textbf{\textit{contamination = 0.10}}: de verwachte proportie anomalieën in de trainingsdata. Deze parameter bepaalt de drempelwaarde waarboven een datapunt als anomalie wordt geclassificeerd. Een waarde van 10\%  is gekozen als schatting, wat betekent dat het model de 10\%  meest afwijkende datapunten als anomalie bestempelt.
+    \item \textbf{\textit{random\_state = 42}}: een vaste seed voor de random number generator, wat de reproduceerbaarheid van de trainingsresultaten garandeert.
+    \item \textbf{\textit{n\_jobs = -1}}: alle beschikbare CPU-cores worden ingezet voor parallelle training, wat de trainingstijd verkort.
+\end{itemize}
+
+\subsection{Model-artefacten} 
+\label{subsec:model-artefacten}
+
+Na de training worden drie componenten opgeslagen in de \textit{model/}-directory:
+
+\begin{itemize}
+    \item \textbf{\textit{isolation\_forest\_model.joblib}}: het getrainde Isolation Forest-model, geserialiseerd met joblib.
+    \item \textbf{\textit{scaler.joblib}}: de gefitte StandardScaler, die noodzakelijk is om nieuwe data op dezelfde schaal te transformeren als de trainingsdata vooraleer deze door het getrainde model wordt beoordeeld.
+    \item \textbf{\textit{model\_metadata.yaml}}: een metadata-bestand met alle informatie over de training van het model, waaronder het aantal trainingssamples, het aantal features, de gebruikte contamination-waarde, de score-distributie (gemiddelde, standaardafwijking, minimum en maximum) en de trainingstijd.
+\end{itemize}
+
+\subsection{Hertraining en modelonderhoud}
+\label{subsec:hertraining-modelonderhoud}
+
+Verkeerspatronen op een web omgeving zijn niet statisch: toevoeging van nieuwe applicaties, variaties die seizoensgebonden zijn, nieuwe klanten of diensten die aangeleverd kunnen worden. Dit voorval werd eerder beschreven in de literatuurstudie als (sectie~\ref{sec:concept-drift}). 
+
+Om dit op te vangen is het proof of concept zo opgezet zodat het model eenvoudig opnieuw getrained kan worden op een nieuwe dataset. De procedure vereist enkel het ophalen van een nieuwe dataset uit de elasticsearch van evolane die minimaal twee weken aan Akamai access-logs data bevat en het opnieuw uitvoeren van het trainingsscript. De bestaande modelartefacten worden hierbij overschreven. 
+
+% bepalen of dit er in blijft of niet aangezien de werking hiervan niet 100 procent is door de windows
+\subsection{Validatie tegen Akamai} 
+\label{subsec:validatie-akamai}
+
+Als bijkomende validatiestap vergelijkt het trainingsscript de voorspellingen van het model met de Akamai-detectie via het \textit{\_akamai\_has\_rule\_ratio}-veld. Deze vergelijking levert vier categorieën op:
+
+\begin{itemize}
+    \item \textbf{Beide vlaggen}: het model en Akamai beschouwen het verkeer als verdacht.
+    \item \textbf{Alleen model}: het model detecteert een anomalie die Akamai niet heeft opgepikt. Dit zijn de meest interessante gevallen, aangezien ze de potentiële meerwaarde van het ML-model aantonen.
+    \item \textbf{Alleen Akamai}: Akamai heeft een regel getriggerd die het model niet als anomalie beschouwt. Dit kan voorkomen wanneer de regelgebaseerde detectie reageert op specifieke signaturen die op gedragsniveau niet afwijkend zijn.
+    \item \textbf{Geen van beide}: zowel het model als Akamai beschouwen het verkeer als normaal.
+\end{itemize}
+
+\section{Implementatie in de Evolane-omgeving} 
+\label{sec:implementatie-evolane}
+
+\subsection{Architectuuroverzicht} 
+\label{subsec:architectuuroverzicht}
+
+De operationele implementatie bestaat uit een Python-applicatie (\textit{anomaly\_pipeline.py}) die als continu draaiend proces op een virtuele machine binnen de Evolane-infrastructuur wordt uitgevoerd. In elke pollcyclus haalt de pipeline nieuwe logs op uit Elasticsearch, voert het preprocessing en feature engineering uit, scoort de resulterende feature-vectoren met het getrainde model en slaat deze resultaten op in het \textit{anomalies\_detected.csv} bestand. 
+
+\subsection{Real-time polling en rolling buffer} 
+\label{subsec:polling-rolling-buffer}
+
+De pipeline pollt elke 30 seconden (configureerbaar via \textit{config.yaml}) naar nieuwe logentries in Elasticsearch. Hierbij wordt de \textit{search\_after}-API gebruikt voor het efficiënt ophalen en dubbele logs te voorkomen, in plaats van de oudere scroll-API. Elk opgehaald log wordt aan een rolling buffer toegevoegd die de afgelopen 10 minuten (tweemaal de venstergrootte) aan data bewaart. Logs die ouder zijn dan deze buffer worden automatisch verwijderd om het geheugengebruik stabiel te houden.
+
+\subsection{Deduplicatie en cooldown} 
+\label{subsec:deduplicatie-cooldown}
+
+Om te voorkomen dat een enkel verdacht IP-adres herhaaldelijk dezelfde anomalie genereert, implementeert de pipeline een deduplicatiemechanisme. Per pollcyclus wordt voor elk IP-adres enkel het venster met de laagste (meest anomale) score behouden. Daarnaast wordt een cooldown-mechanisme toegepast: nadat een IP-adres als anomalie is gemeld wordt het voor de duur van de venstergrootte (5 minuten) onderdrukt. Dit voorkomt dat een ip adres telkens opnieuw blijft gedetecteerd worden door het model en maakt het overzichtelijker voor het soc-team. 
+
+{\small
+\begin{lstlisting}[style=custompython,caption={Deduplicatie mechanisme},label={lst:dlp-selenium}, captionpos=b, basicstyle=\small\ttfamily]
+    if not features_df.empty:
+    scored_df = score_features(features_df, model, scaler)
+    
+    now_ts = time.time()
+    anomalous_df = scored_df[scored_df["is_anomaly"]].copy()
+    
+    if not anomalous_df.empty:
+        best_per_ip = anomalous_df.loc[
+            anomalous_df.groupby("cliIP")["anomaly_score"].idxmin()
+        ]
+        new_anomalies = best_per_ip[
+            ~best_per_ip["cliIP"].apply(
+                lambda ip: (now_ts - alerted_ips.get(ip, 0)) < window_size
+            )
+        ]
+    else:
+        new_anomalies = pd.DataFrame()
+\end{lstlisting}
+}
+
+\subsection{Classificatie van anomalieën} 
+\label{subsec:classificatie-anomalieen}
+
+Naast de binaire classificatie (anomalie of normaal) voert de pipeline een regelgebaseerde post-classificatie uit die elke gedetecteerde anomalie categoriseert op basis van de onderliggende feature-waarden. De volgende categorieën worden onderscheiden:
+
+\begin{itemize}
+    \item \textbf{\textit{HIGH\_RPS}}: meer dan 10 requests per seconde
+    \item \textbf{\textit{HIGH\_VOLUME}}: meer dan 200 requests in het venster
+    \item \textbf{\textit{HIGH\_4XX}}: meer dan 30\  van de requests resulteren in 4xx-statuscodes
+    \item \textbf{\textit{HIGH\_5XX}}: meer dan 10\  van de requests resulteren in 5xx-statuscodes
+    \item \textbf{\textit{ENDPOINT\_HAMMERING}}: een path diversity ratio lager dan 0.05 bij meer dan 10 requests
+    \item \textbf{\textit{HIGH\_DATA\_TRANSFER}}: meer dan 5~MB aan uitgaande data
+    \item \textbf{\textit{AGGRESSIVE\_CRAWL}}: meer dan 100 unieke paden zonder referrer
+    \item \textbf{\textit{NO\_REFERER}}: geen enkele referrer bij meer dan 20 requests
+    \item \textbf{\textit{UNIFORM\_TIMING}}: een standaardafwijking van de inter-request-tijd kleiner dan 0.01 seconde bij meer dan 10 requests
+    \item \textbf{\textit{UA\_INCONSISTENCY}}: meer dan 2 verschillende browsers of besturingssystemen voor één IP
+    \item \textbf{\textit{AKAMAI\_MISSED}}: geen enkele Akamai-regel getriggerd (relevant voor verkeer waar Akamai-context beschikbaar is)
+\end{itemize}
+
+Een anomalie kan meerdere categorieën tegelijk krijgen, wat het SOC-team helpt om snel te begrijpen welk type verdacht gedrag is gedetecteerd. 
+
+\subsection{classificatie van de ernst van de anomalie} 
+\label{subsec:severiteitsbepaling}
+
+Op basis van de anomaliescore wordt een classificatie toegekend hoe ernstig de afwijking is:
+
+\begin{itemize}
+    \item \textbf{Critical}: anomaliescore lager dan $-0.08$
+    \item \textbf{High}: anomaliescore tussen $-0.08$ en $-0.04$
+    \item \textbf{Medium}: anomaliescore tussen $-0.04$ en $-0.01$
+    \item \textbf{Low}: anomaliescore hoger dan $-0.01$
+\end{itemize}
+
+Hoe lager de anomaliescore, hoe minder splitsingen in de decision trees nodig waren om het datapunt te isoleren en hoe meer het afwijkt van het normale gedragspatroon.
+
+\subsection{Monitoring en visualisatie via Grafana} 
+\label{subsec:monitoring-grafana}
+
+De detectieresultaten worden beschikbaar gesteld door het creeëren van een API endpoint die door Grafana opgehaald kan worden. 
+
+\textbf{JSON API.} Een ingebouwde Flask-webserver op poort 8001 biedt een REST API met diverse endpoints die specifiek zijn ontworpen voor integratie met de Grafana Infinity-plugin. Het \textit{/api/anomalies}-endpoint retourneert de volledige lijst van recente anomalieën, \textit{/api/anomalies/summary} groepeert deze per IP-adres met de slechtste score en samengevoegde categorieën, \textit{/api/categories} geeft een verdeling per anomaliecategorie en \textit{/api/severity} biedt een overzicht per severiteitsniveau. Deze API wordt bij het herstarten van de pipeline automatisch gevuld vanuit een persistent CSV-bestand, zodat eerder gedetecteerde anomalieën niet verloren gaan en zichtbaar zijn voor het soc-team in het grafana dashboard.
+
+\subsection{Persistente opslag} 
+\label{subsec:persistente-opslag}
+
+Alle gedetecteerde anomalieën worden doorlopend weggeschreven naar een CSV-bestand (\textit{anomalies\_detected.csv}). Bij het opnieuw opstarten van de pipeline wordt dit bestand automatisch ingelezen, zodat de JSON API de volledige anomalie-historie kan presenteren aan Grafana.
+
+\subsection{Configuratie en operationeel beheer} 
+\label{subsec:configuratie-operationeel-beheer}
+
+De volledige pipeline wordt aangestuurd via een enkel YAML-configuratiebestand (\textit{config.yaml}) dat de volgende aspecten centraliseert: de Elasticsearch-verbindingsgegevens, polling-parameters (interval en batchgrootte), de venster-instellingen (venstergrootte, verschuivingsstap en minimum requestdrempel), filterregels voor monitoring-verkeers.
+
+De pipeline ondersteunt een graceful shutdown via \textit{SIGINT}- en \textit{SIGTERM}-signalen, wat ervoor zorgt dat de lopende pollcyclus wordt afgerond voordat het proces stopt. Dit is essentieel in een productieomgeving waar het proces wordt beheerd via systemd of een vergelijkbaar init-systeem.
