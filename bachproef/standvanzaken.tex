@@ -4,29 +4,29 @@
 % Eigen stand van zaken: 
 \section{OWASP en hedendaagse web- en API-dreigingen}
 \label{sec:api-security-context}
-Om de rol van anomaliedetectie binnen webbeveiliging te kaderen, is het belangrijk eerst te schetsen wat de huidige dreigingen zijn en de beperkingen van de bestaande detectiemechanismen aan te kaarten. 
+Om de rol van anomaliedetectie binnen webbeveiliging te kaderen, is het belangrijk eerst de huidige dreigingen te schetsen en de beperkingen van bestaande detectiemechanismen te bespreken. 
 
-Binnen web- en API-beveiliging speelt OWASP (Open Web Application Security Project) een centrale rol voor het identificeren van de tien meest kritieke kwetsbaarheden binnen web applicaties. OWASP publiceert periodiek top tien lijsten voor zowel web applicaties als voor API's\autocite{OWASP2026,OWASP2023}%OWASP WEB EN API BRON. 
+Binnen web- en API-beveiliging speelt OWASP, het Open Web Application Security Project, een centrale rol voor het identificeren van de tien meest kritieke kwetsbaarheden. OWASP publiceert periodiek top tien lijsten voor zowel webapplicaties als voor API's\autocite{OWASP2026,OWASP2023}. Deze lijsten bieden een overzicht van de meest voorkomende en impactvolle kwetsbaarheden binnen het domein van webbeveiliging.%OWASP WEB EN API BRON. 
 
-Voor de webapplicaties omvat de OWASP TOP 10 kwetsbaarheden zoals injection-aanvallen, broken authentication en security misconfigurations. Deze kwetsbaarheden zijn voornamelijk gericht tot de interactie tussen gebruiker en de webinterface\autocite{OWASP2026}%OWASP WEB BRON. 
+Voor webbapplicaties omvat de OWASP TOP 10 onder meer kwetsbaarheden zoals injection-aanvallen, broken authentication en security misconfigurations. Deze kwetsbaarheden zijn voornamelijk gericht tot de interactie tussen gebruiker en de webinterface\autocite{OWASP2026}%OWASP WEB BRON. 
 
-Voor API's ligt de focus op kwetsbaarheden zoals Broken Object Level Authorization (BOLA), Broken Function Level Authorization en Unrestricted Resource Consumption (OWASP, 2023). API kwetsbaarheden zijn vaker gerelateerd aan onvoldoende controle op de toegang tot deze APIs en misbruiken van businesslogica\autocite{OWASP2023}%API BRON. 
+Voor API's verschuift de focus naar andere soorten risico's zoals Broken Object Level Authorization (BOLA), Broken Function Level Authorization en Unrestricted Resource Consumption. API kwetsbaarheden zijn vaker gerelateerd aan onvoldoende controle op de toegang tot deze APIs en het misbruiken van businesslogica\autocite{OWASP2023}%API BRON. 
 
-Het onderscheid dat gemaakt wordt tussen web- en API-kwetsbaarheden benadrukt dat er nood is aan beveiliging op meerdere niveaus als er gesproken wordt over de beveiliging van web applicaties. Waar dat webaanvallen gericht zijn op de gebruikersinterface, richten API-aanvallen zich tot de directe communicatie tussen systemen. Dit onderscheid is de basis voor een diepere analyse van hoe aanvallen op beide niveaus evolueren. 
+Het onderscheid dat gemaakt wordt tussen web- en API-kwetsbaarheden benadrukt dat er nood is aan beveiliging op meerdere niveaus. Waar dat webaanvallen eerder gericht zijn op de gebruikersinterface, richten API-aanvallen zich tot de directe communicatie tussen systemen. Dit onderscheid is de basis voor een diepere analyse van hoe aanvallen op beide niveaus evolueren. 
 
 \subsection{De groeiende complexiteit van Web-aanvallen}
 \label{subsec:api-aanvallen-complexiteit}
-De complexiteit van aanvallen gericht op webapplicaties is in de afgelopen jaren sterk toegenomen. Volgens rapporten van Akamai is er een significante stijging in webaanvallen, hier spreken ze onder andere over een toename van 33 procent tussen 2023 en 2024\autocite{Akamai2025}%Akamai bron.
+De complexiteit van aanvallen gericht op webapplicaties is in de afgelopen jaren sterk toegenomen. Volgens rapporten van Akamai is er sprake een significante stijging in webaanvallen, hier spreken ze onder andere over een toename van 33 procent tussen 2023 en 2024\autocite{Akamai2025}%Akamai bron.
 
-Moderne webaanvallen op de OWASP TOP 10 zijn: Broken Access Control waar een aanvaller buiten zijn rechten opereert, Injection attacks dit is wanneer de aanvaller code zoals SQL of OS commandos via de webapplicatie uit laat voeren op de server waar de applicatie gehost word om zo info of data te verkregen en authentication failure dit is wanneer de beveiliging van de applicatie er onvoldoende in slaagt om de user van de aanvaller te detecteren als ongeldig of incorrect dit kan dan leiden tot brute force en geautomatiseerde aanvallen\autocite{OWASP2026}%bron owasp WEB.
+Binnen de OWASP TOP 10 komen verschillende aanvalsvormen naar voren die deze evolutie illustreren. Een belangrijk voorbeeld is Broken Access Control waar een aanvaller buiten zijn toegestane rechten handelingen uitvoert. Daarnaast blijven injection attacks een voorkomend risico, dit is wanneer de aanvaller code zoals SQL of OS commando's via de webapplicatie uit laat voeren op de server waar de applicatie gehost word om zo data te verkrijgen. Ook authentication failures vormen een ketsbaarheid, dit is wanneer de beveiliging van de applicatie er onvoldoende in slaagt om de user van de aanvaller te detecteren als ongeldig of incorrect dit kan dan leiden tot brute force en geautomatiseerde aanvallen\autocite{OWASP2026}%bron owasp WEB.
 
-Een kritieke evolutie is dat aanvallen steeds moeilijker te onderscheiden zijn van normaal geldig verkeer. Vandaag de dag maken aanvallers steeds vaker gebruik van geautomatiseerde bots. Deze bots zijn speciaal ontworpen zijn om menselijk gedrag zo nauwkeurig mogelijk te simuleren door het implementeren van variatie in request frequentie en navigatiepatronen. Deze geautomatiseerde aanvallen maken gebruik van grote aantallen requests die geldig lijken en zich aan kunnen passen naar de beveiliging van een webapplicatie. Dit zorgt ervoor dat het verschil tussen een normaal en kwaadaardig verkeer moeilijker waarneembaar wordt\autocite{F52026}.%F5 bron 
+Een kritieke evolutie binnen deze aanvalsvormen is dat kwaadaardig verkeer steeds moeilijker te onderscheiden is van normaal geldig verkeer. Vandaag de dag maken aanvallers steeds vaker gebruik van geautomatiseerde bots. Deze bots zijn speciaal ontworpen om menselijk gedrag zo nauwkeurig mogelijk te simuleren door het implementeren van variatie in de frequentie van verzonden requests en hun navigatiepatronen. Deze geautomatiseerde aanvallen maken gebruik van grote aantallen requests die geldig lijken en zich aan kunnen passen naar de beveiliging van een webapplicatie. Dit zorgt ervoor dat het verschil tussen normaal en kwaadaardig verkeer moeilijker waarneembaar wordt\autocite{F52026}.%F5 bron 
 
 Naast de stijgende complexiteit van webaanvallen kent ook het API-landschap een gelijkaardige evolutie. 
 \subsection{De groeiende complexiteit van API-aanvallen}
 \label{subsec:api-aanvallen-complexiteit}
 
-De complexiteit en frequentie van aanvallen op APIs is eveneens sterk toegenomen. APIs vormen een essentieel onderdeel voor de moderne webapplicaties, maar ze vergroten het aanvalsoppervlak aanzienlijk. Volgens Akamai is er een toename van 32 procent waarneembaar in API aanvallen van 2023 op 2024\autocite{Akamai2025}. %Akamai bron
+De complexiteit en frequentie van aanvallen op APIs is eveneens sterk toegenomen. APIs vormen een essentieel onderdeel voor de moderne webapplicaties, maar ze vergroten het aanvalsoppervlak aanzienlijk\autocite{Akamai2025}. %Akamai bron
 
 In tegenstelling tot klassieke webaanvallen richten API-aanvallen zich op de communicatie tussen softwarecomponenten. Volgens OWASP ontstaan API-kwetsbaarheden voornamelijk door foutieve of beperkte authenticatie en autorisatie. Kwetsbaarheden zoals Broken Object Level Authorization en Broken Function Level Authorization tonen aan dat aanvallers zich richten tot endpoints die technisch correct functioneren, maar onvoldoende toegangscontrole bevatten.
 
@@ -40,7 +40,7 @@ Zowel bij webaanvallen als bij API-aanvallen stelt zich dezelfde vraag: waarom s
 
 Traditionele beveiligingsmechanismen zoals Web Application Firewall (WAF), signature based Intrusion Detection Systems (IDS) en andere regelgebaseerde detectiesystemen steunen voornamelijk op bekende aanvalssignaturen en patronen die op voorhand gedefineerd zijn. Zoals \textcite{Standards2007} beschrijft in hun Intrusion Detection and Prevention systems richtlijnen zijn deze systemen zeer effectief in het detecteren van gedocumenteerde dreigingen, maar eerder beperkt in het detecteren van nieuwe aanvallen waarvoor nog geen signature aanval bestaat. 
 
-Zoals eerder beschreven maken moderne aanvallers steeds vaker gebruik van geautomatiseerde technieken die gespecialiseerd zijn in het nabootsen van legitiem verkeer en dat zich aanpassen aan de beveiliging van een applicatie. Dergelijke aanvallen bevatten vaak geen gekende signatuur of vertonen geen afwijkend patroon dat op voorhand gedifinieerd kan worden \autocite{F52026}.
+Zoals eerder beschreven maken moderne aanvallers steeds vaker gebruik van geautomatiseerde technieken die gespecialiseerd zijn in het nabootsen van legitiem verkeer en dat zich aanpast aan de beveiliging van een applicatie. Dergelijke aanvallen bevatten vaak geen gekende signatuur of vertonen geen afwijkend patroon dat op voorhand gedifinieerd kan worden \autocite{F52026}.
 
 Recente literatuur bevestigt deze claims en benadrukt signature-based systemen te beperkt zijn in het detecteren van zero-day aanvallen binnen het snel evoluerende cybersecuritylandschap. Daarom wordt machine learning steeds vaker voorgesteld als een aanvulling op deze bestaande systemen om eerder ongekende aanvallen te detecteren, false positives te verminderen en beveiliging te verbeteren\autocite{Kumar_2025}. % komt van deze bron Impact of Machine Learning on Intrusion Detection Systems for the Protection of Critical Infrastructure
 
@@ -131,6 +131,9 @@ parameter staat in voor het aantal decision trees binnen het ensemble; een hoger
 aantal bomen verhoogt de stabiliteit maar heeft ook rechtstreeks invloed op de
 rekencomplexiteit. De \texttt{max\_features} parameter bepaalt hoeveel features
 willekeurig gekozen worden per splitsing in de decision tree\autocite{Breiman2001}.
+
+Een fundamentele beperking van Random Forest is de nood aan gelabelde training.sdata
+waarbij elk datapunt in de dataset gelabeld moet zijn als normaal of anomaal. Dit maakt Random Forest minder geschikt voor omgevingen waarin de aard van het verkeer niet op voorhand gekend is en de nadruk ligt op het ontdekken van voorheen onbekende anomalieën~\autocite{Breiman2001}
 
 \textbf{Voordelen:}
 \begin{itemize}
@@ -238,8 +241,11 @@ anomalie\autocite{Mavuduru2026}.
 
 De voornaamste parameter van LOF is \texttt{k}, het aantal buren dat het model
 evalueert. Een kleinere k-waarde maakt het model gevoeliger voor lokale
-variaties; een grotere k-waarde maakt het model beter bestendig tegen false
+variaties, een grotere k-waarde maakt het model beter bestendig tegen false
 positives maar ook minder gevoelig voor lokale anomalieën.
+
+Het voornaamste verschil met isolation forest is dat LOF anomalieën detecteert op basis van relatieve dichtheidsverschillen, dit maakt het model effectiever in het detecteren van lokale anomalieën die zich dichter bevinden bij normale clusters. 
+De berekining van de k-nearest neighbors voor elk datapunt schaalt kwadratisch waardoor het minder geschikt is voor grote datasets in een real-time omgeving~\autocite{Breunig2000}. 
 
 \textbf{Voordelen:}
 \begin{itemize}
@@ -281,6 +287,10 @@ tussen de toegestane outliers en de complexiteit van het model: enerzijds bepaal
 deze een bovengrens voor het aantal toegestane anomalieën, anderzijds een
 ondergrens voor de toegestane hoeveelheid support vectors\autocite{Hejazi2013}.
 
+De belangrijkste hyperparameter bij one-class SVM is de $\nu$-parameter (\textit{nu}), een waarde tussen 0 en 1 met 2 belangrijke functies. 
+Het dient als een bovengrens op het onderdeel aan trainingsfouten, dit zijn de outliers binnen de trainingsdata, en eveneens als een ondergrens op het onderdeel van de support vectors.
+Een lagere $\nu$-waarde kan resulteren in een striktere beslissingsgrens die minder outliers toestaat, terwijl een hogere waarde eerder het effect kan hebben dat uitschieters worden geaccepteerd~\autocite{Scholkopf2001}. 
+
 \textbf{Voordelen:}
 \begin{itemize}
     \item Geschikt voor anomaliedetectie met één enkele klasse, doordat het model
@@ -316,6 +326,9 @@ patroon, zal het model deze goed kunnen reconstrueren. Indien de input afwijking
 bevat, zal de reconstructiefout hoger zijn. De detectie van anomalieën gebeurt
 door het verschil tussen de originele input en de reconstructie te
 berekenen\autocite{Chikezie2025}.
+
+Een datapunt wordt als anomalie beschouwd wanneer de reconstructiefout de vooraf bepaalde drempelwaarde overschrijdt. Een te lage drempelwaarde kan leiden tot een overvloed aan false positives, terwijl een te hoge waarde mogelijks anomalieën zal missen\autocite{Angiulli2023}.
+
 
 \textbf{Voordelen:}
 \begin{itemize}
@@ -385,6 +398,12 @@ Om gedragsmatige patronen te kunnen detecteren wordt ruwe logdata samengevoegd o
 
 De keuze van tijdsvenster is afhankelijk van de data waarop het ML model gebruikt zal worden, doorgaans zijn er twee mogelijkheden: tumbling windows en sliding windows. Bij tumbling windows worden er gebruik gemaakt van niet overlappende intervallen. Bij sliding windows is er sprake van een continue verschuiving van het interval om zo een gelijkmatiger beeld te geven van de gedragsverandering. Voor real-time detectie is sliding window aanbevolen doordat deze sneller reageren op plotse gedragswijzigingen\autocite{Schummer2024}. % Machine Learning-Based Network Anomaly Detection https://www.researchgate.net/publication/387151644_Machine_Learning-Based_Network_Anomaly_Detection_Design_Implementation_and_Evaluation
 
+\subsection{Concept drift in anomaliedetectie}%
+\label{subsec:concept-drift}
+
+Machine-learningmodellen in de context van anomaliedetectie worden getrained op data die het normale verkeersgedrag van op dat moment representeert. In werkelijkheid verandert dit normaal gedrag continu: het lanceren van nieuwe features, het stijgen of dalen van verkeer van gebruikers en aanvallers die zich aanpassen. Deze verschuiving van eigenschappen en gedrag in data wordt ook wel concept drift genoemd. Wanneer concept drift optreed zonder dat het model wordt aangepast, ontstaat er een groeiende kloof tussen wat het model als normaal beschouwt en wat in de werkelijkheid op dat moment normaal is, het gevolg hiervan is een daling in detectieperformantie.   %https://dl.acm.org/doi/epdf/10.1145/3152494.3152501
+
+
 \section{Feature selectie en engineering voor anomaliedetectie}
 \label{sec:ML-methoden-anomalie}
 \subsection{Belang van data quality}
@@ -395,9 +414,9 @@ Anomaliedetectie binnen Web- en API-beveiliging is sterk afhankelijk van de besc
 \subsection{Essentiële features uit Akamai logs}
 \label{subsec:toegevoegde-waarde-ML}
 % Lijst de belangrijkste features voor anomaly detection in Web en API-context
-Logvelden zoals een IP-adres of een geo-locatie zeggen weinig op zichzelf voor een machine-learningmodel. De meerwaarde onstaat doormiddel van deze velden te aggregeren naar features die gedragspatronen tonen over een tijdsvenster. Daarom is feature engineering een bepalende stap voor de detectiecapaciteit van het model te verhogen\autocite{Sowmya2023}. 
+Logvelden zoals een IP-adres of een geo-locatie vertellen weinig op zichzelf voor een machine-learningmodel. De meerwaarde onstaat doormiddel van deze velden te aggregeren naar features die gedragspatronen tonen over een tijdsvenster. Daarom is feature engineering een bepalende stap voor de detectiecapaciteit van het model te verhogen\autocite{Sowmya2023}. 
 
-Zoals eerder beschreven in sectie~\ref{subsec:belang-tijd} is het belangrijk om alle features te berekenen over een tijdsvenster, gegroepeerd per client-ip. Aangezien binnen dit onderzoek 2 aparte modellen zullen geimplementeerd worden, één voor webverkeer en één voor API-verkeer, splitsen we de features op in 2 groepen: web-specififeke features en api-specififeke features. 
+Zoals eerder beschreven in sectie~\ref{subsec:belang-tijd} is het belangrijk om alle features te berekenen over een tijdsvenster, gegroepeerd per client-ip. Aangezien binnen dit onderzoek 2 aparte typen verkeer besproken wordt splitsen we de features op in 2 groepen: web-specififeke features en api-specififeke features. 
 
 \subsubsection{API-specifieke features}
 Voor het anomaliedetectie model voor API-verkeer, wordt er vertrokken van een set ruwe logvelden die rechtstreekse relevant zijn aan de API-endpoints: client IP-adres, API-endpoint, response data size, HTTP-statuscode, timestamp en request type. Deze kenmerken worden niet rechtstreeks gebruikt als input voor het model maar, dienen eerst te worden geaggregeerd over een tijdsvenster en dit expliciet per client-IP~\autocite{Sowmya2023}. 
