@@ -1,0 +1,165 @@
+%%=============================================================================
+%% Evaluatie
+%%=============================================================================
+
+\chapter{\IfLanguageName{dutch}{Evaluatie}{Evaluation}}%
+\label{ch:evaluatie}
+
+\section{Evaluatiemethodiek}
+\label{sec:evaluatiemethodiek}
+
+De evaluatie van een unsupervised anomaliedetectiemodel verschilt van de evaluatie van een supervised model. Bij supervised learning beschikt de onderzoeker over een volledig gelabelde dataset waarmee klassieke metrics zoals accuracy, precision, recall en F1-score rechtstreeks berekend kunnen worden. Bij het hier geïmplementeerde Isolation Forest model is er geen beschikbare grondwaarde: de Akamai access logs bevatten geen betrouwbare classificatie die voor elk request aangeeft of het om normaal of afwijkend gedrag gaat. Het \textit{aapRule}-veld van Akamai geeft weliswaar aan welke beveiligingsregels zijn getriggerd, maar dit is een indicator van regelgebaseerde detectie doot het akamai systeem en geen grondwaarheid voor gedragsmatige anomalieën.
+
+Om toch een gefundeerde evaluatie te bieden, wordt een driedelige evaluatiemethodiek gebruikt die de prestaties van het model vanuit verschillende invalshoeken analyseert. Het eerste onderdeel is een technische vergelijking van de modelvoorspellingen met de bestaande Akamai-detectie. Het tweede onderdeel is een handmatige validatie van een subset van de gedetecteerde anomalieën door een security-analist. Het derde onderdeel is een operationele beoordeling van de bruikbaarheid van het systeem binnen een SOC-context.
+
+\section{Technische evaluatie}
+\label{sec:technische-evaluatie}
+
+\subsection{Vergelijking met Akamai op de trainingsdata}
+
+Om de positionering van het model ten opzichte van de bestaande beveiligingsinfrastructuur te bepalen, worden de voorspellingen van het Isolation Forest model vergeleken met de informatie uit het \textit{aapRule}-veld van Akamai. Per feature-vector wordt bepaald of de meerderheid van de onderliggende requests binnen het window door ten minste één Akamai-regel was gevlagd (\textit{akamai\_has\_rule\_ratio} groter dan 0,5). Deze vergelijking is uitgevoerd op de volledige trainingsdata van 96.289 feature-vectoren en levert vier categorieën op, weergegeven in Tabel~\ref{tab:model-vs-akamai}.
+
+\begin{table}[h]
+\centering
+\caption{Vergelijking van modelvoorspellingen met Akamai-detectie op de trainingsdata (contamination 0,10).}
+\label{tab:model-vs-akamai}
+\begin{tabular}{l r r p{6cm}}
+\hline
+\textbf{Categorie} & \textbf{Aantal} & \textbf{\%} & \textbf{Interpretatie} \\
+\hline
+Beide vlaggen & 5.598 & 5,8\% & Model bevestigt Akamai's detectie \\
+Alleen model & 4.031 & 4,2\% & Model detecteert wat Akamai mist \\
+Alleen Akamai & 73.225 & 76,0\% & Regelgebaseerde detectie zonder gedragsafwijking \\
+Geen van beide & 13.435 & 14,0\% & Schoon verkeer \\
+\hline
+\end{tabular}
+\end{table}
+
+De resultaten tonen dat het model 5.598 feature-vectoren als anomalie classificeert die ook door Akamai zijn gevlagd, wat bevestigt dat het model in staat is om verkeer te herkennen dat de bestaande rule-engine als verdacht beschouwt. De 4.031 vectoren die uitsluitend door het model zijn gedetecteerd vormen de primaire meerwaarde van het proof of concept: dit is verkeer dat door de Akamai rule-engine glipt maar dat het ML-model wél als gedragsmatig afwijkend classificeert.
+
+De 73.225 vectoren die alleen door Akamai zijn gevlagd maar niet door het model vormen geen gemiste detecties. Akamai vlagt verkeer op basis van bekende signatures en rule-IDs, zoals \textit{BOT-BROWSER-IMPERSONATOR}. Dit verkeer voldoet aan de voorwaarden van een specifieke regel, maar vertoont qua gedrag geen statistisch afwijkend patroon ten opzichte van het normale verkeer dat het model heeft geleerd. Dit benadrukt dat het ML-model en de rule-engine complementaire detectiemethoden zijn.
+
+\subsection{Detectie op verkeer zonder Akamai-regels}
+
+Om specifiek de meerwaarde van het model als aanvulling op Akamai te evalueren, is het getrainde model toegepast op een dataset van 85.501 logrecords waarvoor het \textit{aapRule}-veld leeg was. Dit zijn requests die de volledige Akamai rule-engine hebben doorlopen zonder dat er een WAF-regel, bot-regel of custom regel is getriggerd. Na preprocessing en feature engineering resulteerde dit in 22.121 feature-vectoren van 3.001 unieke IP-adressen. Het model detecteerde 2.083 anomalieën (9,4\%), weergegeven in Tabel~\ref{tab:aap-empty}.
+
+\begin{table}[h]
+\centering
+\caption{Resultaten van het model op verkeer zonder Akamai-detectie.}
+\label{tab:aap-empty}
+\begin{tabular}{l r}
+\hline
+\textbf{Metriek} & \textbf{Waarde} \\
+\hline
+Totaal gescorde windows & 22.121 \\
+Unieke IP-adressen & 3.001 \\
+Gedetecteerde anomalieën & 2.083 (9,4\%) \\
+Normaal verkeer & 20.038 (90,6\%) \\
+\hline
+\end{tabular}
+\end{table}
+
+Aangezien deze logs per definitie geen Akamai-regel hebben getriggerd, zijn alle detecties verkeer dat de bestaande beveiligingsinfrastructuur heeft doorlaten. De meest voorkomende anomaliecategorieën zijn \textit{HIGH\_5XX} (67,0\%), \textit{UA\_INCONSISTENCY} (23,2\%), \textit{NO\_REFERER} (12,3\%) en \textit{ENDPOINT\_HAMMERING} (6,8\%). De dominantie van \textit{HIGH\_5XX} is opmerkelijk: dit zijn requests die server errors veroorzaken, wat kan wijzen op fuzz testing of applicatie-misbruik. Deze requests worden niet door Akamai gevlagd omdat ze geen bekende aanvalssignatuur bevatten, maar het gedragspatroon wordt door het model wél als afwijkend herkend.
+
+\subsection{Vergelijking met gelijkaardig onderzoek}
+
+De trainingsresultaten worden vergeleken met het onderzoek van Chua et al.~\autocite{Chua2024}, die eveneens Isolation Forest implementeerden voor anomaliedetectie in webverkeer. Tabel~\ref{tab:vergelijking-chua} toont de vergelijking van de modelparameters en de resultaten.
+
+\begin{table}[h]
+\centering
+\caption{Vergelijking van het proof of concept met Chua et al. (2024).}
+\label{tab:vergelijking-chua}
+\begin{tabular}{l l l}
+\hline
+\textbf{Aspect} & \textbf{Dit onderzoek} & \textbf{Chua et al. (2024)} \\
+\hline
+Dataset & Akamai access logs & Nginx server logs \\
+Omvang trainingsdata & 96.289 feature-vectoren & 2.591.287 records \\
+Contamination & 0,10 & 0,03 \\
+Features & 26 gedragsfeatures & 13 features (incl. IoC) \\
+Feature-aanpak & Sliding window per IP & Per request \\
+Precision (breed) & 93,7\% & 95\% \\
+False positive rate & 6,3\% & 4,5\% \\
+Recall & Niet berekend & 90\% \\
+Near-real-time & Ja (30s polling) & Nee (batch) \\
+\hline
+\end{tabular}
+\end{table}
+
+De precision van dit onderzoek (93,7\%) is vergelijkbaar met die van Chua et al. (95\%), ondanks de verschillende contexten. Het verschil in false positive rate (6,3\% versus 4,5\%) kan verklaard worden door de hogere contamination parameter (0,10 versus 0,03) en het feit dat dit onderzoek de evaluatie op IP-niveau uitvoert in plaats van op request-niveau. Een belangrijk verschil is dat dit onderzoek een near-real-time pipeline implementeert met een effectieve detectielatentie van circa 30 seconden, terwijl Chua et al. uitsluitend batch-verwerking toepassen.
+
+\section{Handmatige validatie}
+\label{sec:handmatige-validatie}
+
+\subsection{Methodiek}
+
+Om de precision van het model te bepalen en inzicht te krijgen in de aard van de gedetecteerde anomalieën, is een handmatige validatie uitgevoerd op de unieke IP-adressen die door het model als anomaal zijn geclassificeerd gedurende de near-real-time detectieperiode. Voor elk IP zijn de volledige requestlogs opgehaald uit Elasticsearch en is een gedetailleerd gedragsrapport gegenereerd. Dit rapport bevat de volledige requestgeschiedenis, de statuscodeverdeling, de gebruikte HTTP-methodes, de meest bezochte paden, de user-agent informatie, een timinganalyse, het datavolume, en de Akamai-detectiestatus.
+
+Om een representatief beeld te verkrijgen van de modelprestaties is een gestratificeerde steekproef genomen over de vier severity-niveaus (critical, high, medium, low). Dit voorkomt dat de evaluatie vertekend wordt door uitsluitend de meest extreme anomalieën te beoordelen, en geeft inzicht in de betrouwbaarheid van het model bij grensgevallen.
+
+Op basis van de gedragsrapporten is elk IP geclassificeerd in een van vier categorieën:
+
+\begin{itemize}
+    \item \textbf{True Positive --- Malicious:} verkeer dat aantoonbaar kwaadaardig is, zoals vulnerability scanners, brute force pogingen en agressieve scrapers.
+    \item \textbf{True Positive --- Suspicious Bot:} geautomatiseerd verkeer dat verdacht is maar waarvan de intentie niet eenduidig als kwaadaardig kan worden vastgesteld.
+    \item \textbf{True Positive --- Benign Bot:} goedaardig geautomatiseerd verkeer, zoals bekende SEO-crawlers, e-mail clients en monitoring-tools.
+    \item \textbf{False Positive:} IP-adressen die door het model als anomaal zijn geclassificeerd maar bij nader onderzoek normaal gebruikersgedrag vertonen.
+\end{itemize}
+
+De classificatie als true positive of false positive is niet uitsluitend gebaseerd op de vraag of het verkeer kwaadaardig is. Het model is ontworpen om gedragsafwijkingen te detecteren, niet om onderscheid te maken tussen goedaardige en kwaadaardige bots. Een goedaardige bot die daadwerkelijk afwijkend gedrag vertoont is een terechte detectie (true positive), omdat het model correct heeft geïdentificeerd dat het gedrag afwijkt van het normale patroon. Alleen verkeer dat geen daadwerkelijke gedragsafwijking vertoont wordt als false positive beschouwd.
+
+\subsection{Resultaten van de handmatige validatie}
+
+% ============================================================
+% PLACEHOLDER: Vul hier de resultaten in van de validatie door de Evolane-analist
+% ============================================================
+
+De handmatige validatie is uitgevoerd op \textit{[AANTAL]} unieke IP-adressen, verdeeld over de vier severity-niveaus. De resultaten zijn weergegeven in Tabel~\ref{tab:handmatige-validatie}.
+
+\begin{table}[h]
+\centering
+\caption{Classificatie van de geëvalueerde IP-adressen door de security-analist.}
+\label{tab:handmatige-validatie}
+\begin{tabular}{l r r p{5cm}}
+\hline
+\textbf{Classificatie} & \textbf{Aantal} & \textbf{\%} & \textbf{Beschrijving} \\
+\hline
+True Positive --- Malicious & \textit{[X]} & \textit{[X\%]} & Scanners, brute force, webshell zoeken \\
+True Positive --- Suspicious Bot & \textit{[X]} & \textit{[X\%]} & Verdachte bots, UA-rotatie \\
+True Positive --- Benign Bot & \textit{[X]} & \textit{[X\%]} & SEO-crawlers, e-mail clients \\
+False Positive & \textit{[X]} & \textit{[X\%]} & Normaal verkeer onterecht gevlagd \\
+\hline
+\end{tabular}
+\end{table}
+
+De handmatige validatie levert twee precisiemetrieken op. Wanneer elke terechte gedragsafwijking als true positive wordt beschouwd, bedraagt de precision \textit{[X\%]}. Wanneer uitsluitend kwaadaardig verkeer als true positive wordt geteld, bedraagt de precision \textit{[X\%]}. De false positive rate bedraagt \textit{[X\%]}.
+
+% ============================================================
+% PLACEHOLDER: Voeg hier eventueel 2-3 concrete voorbeelden toe
+% van opvallende detecties die de analist heeft beoordeeld
+% ============================================================
+
+\section{Operationele beoordeling}
+\label{sec:operationele-beoordeling}
+
+Naast de technische evaluatie is ook de operationele bruikbaarheid van het systeem beoordeeld. Deze beoordeling richt zich op de vraag of het proof of concept integreerbaar is met de bestaande securityomgeving van Evolane en of het in de praktijk bruikbare informatie oplevert voor het SOC-team.
+
+\subsection{Near-real-time detectieperformantie}
+
+De pipeline is geïmplementeerd als een continu draaiend proces op een Ubuntu VM in de Google Cloud omgeving. De volledige verwerkingscyclus van het ophalen van logs uit Elasticsearch tot het scoren met het Isolation Forest model duurt doorgaans minder dan twee seconden. Met een polling-interval van 30 seconden resulteert dit in een effectieve detectielatentie van circa 30 seconden. Dit betekent dat afwijkend verkeer binnen een halve minuut na het plaatsvinden kan worden gedetecteerd en gerapporteerd.
+
+De pipeline is ontworpen voor langdurige, ononderbroken uitvoering. Een graceful shutdown mechanisme zorgt ervoor dat het proces bij een stopverzoek de huidige cyclus afrondt. Een rolling buffer van tien minuten aan preprocessed logs garandeert dat er bij fluctuerend verkeersvolume altijd voldoende data beschikbaar is voor volledige sliding windows. Een deduplicatiemechanisme op IP-niveau met een cooldown-periode voorkomt herhaalde alerts voor hetzelfde IP binnen een kort tijdsbestek.
+
+\subsection{Persistentie en beschikbaarheid}
+
+Gedetecteerde anomalieën worden persistent opgeslagen in een CSV-bestand. Bij een herstart van de pipeline of de VM worden eerder gedetecteerde anomalieën automatisch hersteld vanuit dit bestand, zodat het Grafana-dashboard direct de historische detecties toont. De pipeline is geconfigureerd als een systemd-service die automatisch opstart bij een reboot van de VM en automatisch herstart bij een onverwachte crash.
+
+\subsection{Visualisatie en integratie}
+
+De detectieresultaten worden ontsloten via een JSON API die door de Grafana Infinity plugin wordt bevraagd. Het Grafana-dashboard biedt een overzicht van de gedetecteerde anomalieën met de mogelijkheid om door te klikken naar de onderliggende Elasticsearch-logs per IP-adres. Dit stelt een security-analist in staat om vanuit het anomalie-overzicht direct de ruwe logs te inspecteren en een beoordeling te maken van de gedetecteerde afwijking.
+
+\subsection{Beperkingen}
+
+Het systeem kent een aantal operationele beperkingen. Ten eerste is de vergelijking met Akamai-detectie op window-niveau uitgevoerd in plaats van op IP-niveau, waardoor de \textit{akamai\_detected} indicator niet altijd het volledige beeld geeft van wat Akamai over een specifiek IP weet. Ten tweede is het model getraind op een dataset die reeds veel botverkeer bevatte, waardoor het model bepaalde botpatronen als \textit{normaal} heeft geleerd. Ten derde kan recall niet berekend worden zonder een volledig gelabelde referentiedataset, wat een beperking is van de evaluatiemethode.
+
+
