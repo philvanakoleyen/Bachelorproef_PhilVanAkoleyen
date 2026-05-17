@@ -1,20 +1,16 @@
-%%=============================================================================
-%% Resultaten
-%%=============================================================================
-
 \chapter{\IfLanguageName{dutch}{Resultaten}{Results}}%
 \label{ch:resultaten}
-
-\section{Inleiding}
-\label{sec:inleiding-resultaten}
-
-Dit hoofdstuk presenteert de concrete resultaten van het anomaliedetectiesysteem. Eerst worden de trainingsresultaten besproken, gevolgd door de resultaten van de near-real-time detectie en de uitkomsten van de handmatige validatie. Tot slot wordt een samenvatting gegeven van alle evaluatiemetrieken.
-
+ 
+\section{Evaluatiedataset}
+\label{sec:evaluatiedataset}
+ 
+De evaluatie is uitgevoerd op een dataset van 331.571 Akamai access logs, verzameld over de periode van 4 mei tot en met 11 mei 2026. Na preprocessing, waarbij monitoring-requests en health checks zijn verwijderd, resteerden 291.584 bruikbare records van 8.018 unieke IP-adressen. De feature engineering over sliding windows van vijf minuten met een minimum van tien requests per window resulteerde in 38.087 feature-vectoren van 1.263 unieke IP-adressen.
+ 
 \section{Trainingsresultaten}
 \label{sec:trainingsresultaten}
-
-Het Isolation Forest model is getraind op een historische dataset van 626.263 Akamai access logs, verzameld over een periode van ongeveer vijftien dagen. Na preprocessing, waarbij 53.443 monitoringrequests en 40 health checks zijn verwijderd, resteerden 572.780 bruikbare records. De feature engineering over sliding windows van vijf minuten resulteerde in 96.289 feature-vectoren van 3.556 unieke IP-adressen. De trainingsresultaten zijn samengevat in Tabel~\ref{tab:trainingsresultaten}.
-
+ 
+Het model is getraind op een historische dataset van 626.263 access logs, verzameld over een periode van twee weken. Na preprocessing resteerden 564.150 bruikbare records. De feature engineering resulteerde in 75.927 feature-vectoren van 1.764 unieke IP-adressen. De trainingsresultaten zijn samengevat in Tabel~\ref{tab:trainingsresultaten}.
+ 
 \begin{table}[h]
 \centering
 \caption{Samenvatting van de trainingsresultaten.}
@@ -24,132 +20,251 @@ Het Isolation Forest model is getraind op een historische dataset van 626.263 Ak
 \textbf{Metriek} & \textbf{Waarde} \\
 \hline
 Ruwe logrecords & 626.263 \\
-Na preprocessing & 572.780 \\
-Feature-vectoren & 96.289 \\
-Unieke IP-adressen & 3.556 \\
+Na preprocessing & 564.150 \\
+Feature-vectoren & 75.927 \\
+Unieke IP-adressen & 1.764 \\
+Aantal features & 25 \\
 Contamination parameter & 0,10 \\
 Aantal decision trees & 200 \\
-Trainingstijd & 1,5 seconden \\
-Gedetecteerde anomalieën & 9.629 (10,0\%) \\
-Normaal verkeer & 86.660 (90,0\%) \\
-Anomaly score bereik & [-0,1785 ; 0,1592] \\
+Trainingstijd & 1,8 seconden \\
+Gedetecteerde anomalieën & 7.593 (10,0\%) \\
+Normaal verkeer & 68.334 (90,0\%) \\
+Anomaly score bereik & [-0,2287 ; 0,1586] \\
 \hline
 \end{tabular}
 \end{table}
 
-De keuze voor een contamination van 0,10 is het resultaat van een iteratief proces. Een eerste training met een contamination van 0,05 resulteerde in 4.813 anomalieën waarvan 1.899 nieuwe vondsten ten opzichte van Akamai. Na verhoging naar 0,10 steeg het aantal nieuwe vondsten naar 4.031, terwijl de overlap met Akamai eveneens toenam van 2.914 naar 5.598. Deze dubbele stijging bevestigt dat de extra detecties niet uitsluitend ruis zijn, maar dat het model bij een hogere sensitiviteit ook meer bevestigt van wat Akamai al detecteert.
 
-\section{Resultaten vergelijking model en Akamai}
-\label{sec:resultaten-model-akamai}
-
-De vergelijking tussen de modelvoorspellingen en de Akamai-detectie op de trainingsdata toont de complementariteit van beide systemen. Het model vindt 4.031 anomalieën die Akamai mist, terwijl Akamai 73.225 gevallen vlagt die het model als gedragsmatig normaal beschouwt. De 5.598 gevallen waarin beide systemen overeenstemmen bevestigen dat het model in staat is relevante anomalieën te herkennen.
-
-Bij de toepassing op de 85.501 logs zonder Akamai-regels detecteert het model 2.083 aanvullende anomalieën. Dit zijn IP-adressen die de volledige Akamai rule-engine hebben doorlopen zonder enige detectie, maar die op basis van hun gedragsprofiel wel afwijken van het normale patroon. De voornaamste categorieën zijn verkeer dat server errors veroorzaakt (67\%), user-agent inconsistenties (23\%) en verkeer zonder referer header (12\%).
-
-\section{Resultaten near-real-time detectie}
-\label{sec:resultaten-near-real-time}
-
-Gedurende de near-real-time detectieperiode heeft de pipeline \textit{[AANTAL]} unieke IP-adressen als anomaal geclassificeerd. De verdeling over de severity-niveaus is weergegeven in Tabel~\ref{tab:severity-verdeling}.
-
+ 
+\section{Scoringsresultaten op de evaluatiedataset}
+\label{sec:scoringsresultaten}
+ 
+Het getrainde model is toegepast op de evaluatiedataset. Het model classificeerde 4.211 windows (11,1\%) als anomalie, afkomstig van 290 unieke IP-adressen. De resultaten zijn weergegeven in Tabel~\ref{tab:scoringsresultaten}.
+ 
 \begin{table}[h]
 \centering
-\caption{Verdeling van gedetecteerde anomalieën per severity-niveau.}
-\label{tab:severity-verdeling}
+\caption{Scoringsresultaten op de evaluatiedataset.}
+\label{tab:scoringsresultaten}
+\begin{tabular}{l r}
+\hline
+\textbf{Metriek} & \textbf{Waarde} \\
+\hline
+Totaal gescoorde windows & 38.087 \\
+Unieke IP-adressen & 1.263 \\
+Anomalie-windows & 4.211 (11,1\%) \\
+Unieke anomale IPs & 290 \\
+Normaal verkeer & 33.876 (88,9\%) \\
+\hline
+\end{tabular}
+\end{table}
+ 
+De categorieverdeling van de gedetecteerde anomalieën is weergegeven in Tabel~\ref{tab:categorieverdeling}. Een anomalie kan meerdere categorieën tegelijk krijgen, wat het SOC-team helpt om snel te begrijpen welk type verdacht gedrag is gedetecteerd.
+ 
+\begin{table}[h]
+\centering
+\caption{Categorieverdeling van de gedetecteerde anomalieën.}
+\label{tab:categorieverdeling}
 \begin{tabular}{l r r}
 \hline
-\textbf{Severity} & \textbf{Aantal IPs} & \textbf{Percentage} \\
+\textbf{Categorie} & \textbf{Aantal windows} & \textbf{Percentage} \\
 \hline
-Critical (score $<$ -0,08) & \textit{[X]} & \textit{[X\%]} \\
-High (score -0,08 tot -0,04) & \textit{[X]} & \textit{[X\%]} \\
-Medium (score -0,04 tot -0,01) & \textit{[X]} & \textit{[X\%]} \\
-Low (score -0,01 tot 0,00) & \textit{[X]} & \textit{[X\%]} \\
+GENERAL\_ANOMALY & 2.304 & 54,7\% \\
+NO\_REFERER & 923 & 21,9\% \\
+HIGH\_DATA\_TRANSFER & 594 & 14,1\% \\
+UA\_INCONSISTENCY & 544 & 12,9\% \\
+HIGH\_RPS & 472 & 11,2\% \\
+HIGH\_4XX & 461 & 10,9\% \\
+HIGH\_VOLUME & 386 & 9,2\% \\
+ENDPOINT\_HAMMERING & 339 & 8,1\% \\
+AGGRESSIVE\_CRAWL & 230 & 5,5\% \\
+HIGH\_5XX & 152 & 3,6\% \\
+UNIFORM\_TIMING & 69 & 1,6\% \\
 \hline
 \end{tabular}
 \end{table}
-
-% ============================================================
-% PLACEHOLDER: Vul de severity aantallen in vanuit je Grafana dashboard
-% ============================================================
-
-\subsection{Voorbeelden van gedetecteerde anomalieën}
-
-Om de werking van het model te illustreren worden drie representatieve detecties besproken die de verschillende typen anomalieën tonen die het systeem identificeert.
-
-% ============================================================
-% PLACEHOLDER: Kies 3 concrete IPs uit je investigation reports
-% en beschrijf ze hieronder. Suggestie:
-% 1. Een duidelijk kwaadaardige (bv. de WordPress scanner)
-% 2. Een verdachte bot (bv. de rb_dzc35632 bezoekers)
-% 3. Een goedaardige bot (bv. Google Gmail Image Proxy)
-% ============================================================
-
-\textbf{Voorbeeld 1: Vulnerability scanner.} Het IP-adres \textit{[IP]} werd gedetecteerd met een anomaly score van \textit{[SCORE]} (severity: critical). In een tijdsvenster van vijf minuten werden \textit{[AANTAL]} requests uitgevoerd naar \textit{[AANTAL]} unieke paden, waaronder verdachte bestanden zoals \textit{[PADEN]}. De error rate bedroeg \textit{[X\%]} en er was geen user-agent of referer header aanwezig. Het model classificeerde dit als \textit{[CATEGORIEËN]}. Dit IP was \textit{[wel/niet]} door Akamai gedetecteerd.
-
-\textbf{Voorbeeld 2: Verdachte bot.} Het IP-adres \textit{[IP]} werd gedetecteerd met een anomaly score van \textit{[SCORE]}. \textit{[Beschrijf het gedrag en waarom het verdacht is.]}
-
-\textbf{Voorbeeld 3: Goedaardige bot.} Het IP-adres \textit{[IP]} werd gedetecteerd met een anomaly score van \textit{[SCORE]}. \textit{[Beschrijf het gedrag en leg uit waarom het een true positive maar goedaardig is.]}
-
-\section{Resultaten handmatige validatie}
-\label{sec:resultaten-handmatige-validatie}
-
-% ============================================================
-% PLACEHOLDER: Vul in na de validatie door de Evolane-analist
-% ============================================================
-
-De gestratificeerde steekproef van \textit{[AANTAL]} IP-adressen is voorgelegd aan een security-analist van Evolane ter handmatige classificatie. De resultaten zijn weergegeven in Tabel~\ref{tab:resultaten-validatie}.
-
+ 
+\section{Vergelijking met Akamai-detectie}
+\label{sec:resultaten-vergelijking-akamai}
+ 
+\subsection{Akamai-detectieoverzicht}
+ 
+Van de 8.018 unieke IP-adressen in de evaluatiedataset werd 64,4\% (5.160 IPs) door ten minste één Akamai-beveiligingsregel gevlagd. De Akamai-detectie is sterk gedomineerd door BOT-regels, die 96,4\% van de gevlagde IPs betreffen. Tabel~\ref{tab:akamai-breakdown} toont de uitsplitsing per regelcategorie.
+ 
 \begin{table}[h]
 \centering
-\caption{Resultaten van de handmatige validatie.}
+\caption{Akamai-detectie uitgesplitst per regelcategorie.}
+\label{tab:akamai-breakdown}
+\begin{tabular}{l r}
+\hline
+\textbf{Categorie} & \textbf{Unieke IPs} \\
+\hline
+BOT-regels (390x, 399x, BOT-*) & 4.976 \\
+WAF-regels (300x, 95x-99x) & 61 \\
+CUSTOM-regels (cat 60x) & 129 \\
+Alleen BOT (geen WAF) & 4.941 \\
+\hline
+Totaal met minstens 1 regel & 5.160 \\
+\hline
+\end{tabular}
+\end{table}
+ 
+\subsection{Model versus Akamai}
+ 
+Van de 290 door het model gedetecteerde IPs werden 232 (80,0\%) ook door minstens één Akamai-regel gevlagd. De overige 58 IPs (20,0\%) zijn uitsluitend door het model gedetecteerd. Tabel~\ref{tab:model-vs-akamai-detail} toont de uitsplitsing per Akamai-regelcategorie.
+ 
+\begin{table}[h]
+\centering
+\caption{Overlap tussen modeldetecties en Akamai-regelcategorieën.}
+\label{tab:model-vs-akamai-detail}
+\begin{tabular}{l r r}
+\hline
+\textbf{Overlap} & \textbf{Aantal IPs} & \textbf{\% van model} \\
+\hline
+Model + Akamai BOT & 201 & 69,3\% \\
+Model + Akamai WAF & 44 & 15,2\% \\
+Model + Akamai CUSTOM & 61 & 21,0\% \\
+Model + Akamai (totaal) & 232 & 80,0\% \\
+Model-only & 58 & 20,0\% \\
+\hline
+\end{tabular}
+\end{table}
+ 
+\subsection{Proxy recall per regelcategorie}
+ 
+De proxy recall is berekend over de 1.506 IP-adressen die minstens tien requests hebben uitgevoerd binnen de evaluatieperiode. Dit zijn de IPs die het model daadwerkelijk kon evalueren gezien de minimale requestdrempel van tien per vijf-minuten window. De overige 6.755 IPs met minder dan tien requests vallen buiten het bereik van het model en worden niet meegeteld in de vergelijking. De resultaten zijn weergegeven in Tabel~\ref{tab:proxy-recall}.
+ 
+\begin{table}[h]
+\centering
+\caption{Proxy recall per Akamai-regelcategorie (alleen IPs met $\geq$ 10 requests).}
+\label{tab:proxy-recall}
+\begin{tabular}{l r r r}
+\hline
+\textbf{Regelcategorie} & \textbf{Model vindt} & \textbf{Akamai totaal} & \textbf{Proxy recall} \\
+\hline
+WAF-regels & 44 & 46 & 95,7\% \\
+CUSTOM-regels & 61 & 63 & 96,8\% \\
+BOT-regels & 201 & 571 & 35,2\% \\
+Alle Akamai-regels & 232 & 684 & 33,9\% \\
+\hline
+\end{tabular}
+\end{table}
+ 
+De proxy recall op WAF-regels (95,7\%) en CUSTOM-regels (96,8\%) toont aan dat het model vrijwel alle IPs detecteert die door Akamai als applicatie-aanval of via aangepaste regels zijn geïdentificeerd, mits deze IPs voldoende requests genereren om door het model geëvalueerd te worden. Dit betekent dat het model effectief is in het herkennen van dezelfde dreigingen die Akamai via signatuurgebaseerde WAF-regels detecteert, maar dan op basis van gedragspatronen.
+ 
+De lagere proxy recall op BOT-regels (35,2\%) is verklaarbaar door het verschil in detectiemethode. Akamai's bot manager detecteert bots op basis van individuele HTTP-headers die niet beschikbaar zijn in de DataStream-logs: ontbrekende Cookie-headers, ontbrekende Sec-Fetch-headers, verouderde HTTP-versies en Chrome-signatuurafwijkingen. Veel van de door Akamai gevlagde bots vertonen op gedragsniveau geen afwijkend patroon ten opzichte van normaal verkeer. Het betreft veelal bekende crawlers die de website met lage frequentie indexeren en waarbij het gedragsprofiel niet afwijkt van dat van een normale bezoeker.
+ 
+\subsection{Interpretatie}
+ 
+De resultaten bevestigen dat het model en Akamai complementaire detectiemethoden zijn. Akamai detecteert op basis van bekende signaturen en HTTP-headerinspectie, het model op basis van gedragsafwijkingen over tijd. De 58 model-only vondsten (20,0\%) vormen de primaire meerwaarde: dit zijn IP-adressen die de volledige Akamai rule-engine hebben doorlopen zonder enige detectie, maar die op basis van hun gedragsprofiel wel afwijken van het normale patroon. Hierbij dient opgemerkt te worden dat een deel van deze IPs mogelijk reeds door Akamai is geblokkeerd via geo-blocking, een mechanisme dat niet zichtbaar is in het \textit{aapRule}-veld.
+ 
+\section{Resultaten handmatige validatie}
+\label{sec:resultaten-handmatige-validatie}
+ 
+Uit de 290 gedetecteerde IP-adressen is een gestratificeerde steekproef van 42 IPs genomen: 12 critical, 13 high, 13 medium en alle 7 low-severity IPs. De selectie is uitgevoerd met een vaste random seed voor reproduceerbaarheid. De steekproef is voorgelegd aan een security-analist van Evolane, die elk IP heeft beoordeeld op basis van de requestlogs in het Grafana-dashboard. De resultaten zijn weergegeven in Tabel~\ref{tab:resultaten-validatie}.
+ 
+\begin{table}[h]
+\centering
+\caption{Resultaten van de handmatige validatie door de security-analist.}
 \label{tab:resultaten-validatie}
 \begin{tabular}{l r r}
 \hline
 \textbf{Classificatie} & \textbf{Aantal} & \textbf{Percentage} \\
 \hline
-True Positive --- Malicious & \textit{[X]} & \textit{[X\%]} \\
-True Positive --- Suspicious Bot & \textit{[X]} & \textit{[X\%]} \\
-True Positive --- Benign Bot & \textit{[X]} & \textit{[X\%]} \\
-False Positive & \textit{[X]} & \textit{[X\%]} \\
+True Positive --- Malicious & 10 & 23,8\% \\
+True Positive --- Suspicious Bot & 7 & 16,7\% \\
+True Positive --- Benign Bot & 18 & 42,9\% \\
+False Positive & 7 & 16,7\% \\
 \hline
-\textbf{Totaal} & \textit{[X]} & 100\% \\
+\textbf{Totaal} & 42 & 100\% \\
 \hline
 \end{tabular}
 \end{table}
-
-Op basis van deze validatie zijn de volgende precisiemetrieken berekend:
-
+ 
+De handmatige validatie levert de volgende precisiemetrieken op:
+ 
 \begin{itemize}
-    \item \textbf{Precision (breed):} het percentage detecties dat een daadwerkelijke gedragsafwijking betreft (alle categorieën behalve false positive): \textit{[X\%]}.
-    \item \textbf{Precision (strikt):} het percentage detecties dat aantoonbaar kwaadaardig verkeer betreft (alleen malicious): \textit{[X\%]}.
-    \item \textbf{False positive rate:} het percentage detecties dat normaal gebruikersgedrag betreft: \textit{[X\%]}.
+    \item \textbf{Precision (breed):} 83,3\% --- het percentage detecties dat een daadwerkelijke gedragsafwijking betreft (alle categorieën behalve false positive).
+    \item \textbf{Precision (strikt):} 23,8\% --- het percentage detecties dat aantoonbaar kwaadaardig verkeer betreft.
+    \item \textbf{False positive rate:} 16,7\% --- het percentage detecties dat een menselijke gebruiker betreft die onterecht als anomalie is geclassificeerd.
 \end{itemize}
-
-\section{Samenvatting van de resultaten}
-\label{sec:samenvatting-resultaten}
-
-Tabel~\ref{tab:samenvatting-alle-resultaten} geeft een overzicht van alle evaluatieresultaten.
-
+ 
+\subsection{Resultaten per severity-niveau}
+ 
+De precision verschilt sterk per severity-niveau, zoals weergegeven in Tabel~\ref{tab:precision-per-severity}. Dit toont aan dat de anomaliescore een betrouwbare indicator is voor de ernst van de detectie.
+ 
 \begin{table}[h]
 \centering
-\caption{Samenvatting van alle evaluatieresultaten.}
-\label{tab:samenvatting-alle-resultaten}
-\begin{tabular}{l l r}
+\caption{Precision per severity-niveau.}
+\label{tab:precision-per-severity}
+\begin{tabular}{l r r r}
 \hline
-\textbf{Evaluatieonderdeel} & \textbf{Metriek} & \textbf{Waarde} \\
+\textbf{Severity} & \textbf{Steekproef} & \textbf{False positives} & \textbf{Precision} \\
 \hline
-Model vs Akamai & Overlap (beide vlaggen) & 5.598 (5,8\%) \\
-Model vs Akamai & Nieuwe detecties (model only) & 4.031 (4,2\%) \\
-Ongedetecteerd verkeer & Anomalieën zonder aapRule & 2.083 / 22.121 (9,4\%) \\
-Handmatige validatie & Precision (breed) & \textit{[X\%]} \\
-Handmatige validatie & Precision (strikt) & \textit{[X\%]} \\
-Handmatige validatie & False positive rate & \textit{[X\%]} \\
-Handmatige validatie & Geëvalueerde IPs & \textit{[X]} \\
-Near-real-time & Detectielatentie & $\sim$30 seconden \\
-Near-real-time & Verwerkingstijd per cyclus & $<$ 2 seconden \\
+Critical & 12 & 0 & 100,0\% \\
+High & 13 & 1 & 92,3\% \\
+Medium & 13 & 2 & 84,6\% \\
+Low & 7 & 4 & 42,9\% \\
 \hline
 \end{tabular}
 \end{table}
+ 
+Bij critical severity is de precision 100\%: alle 12 geëvalueerde IPs zijn terecht gedetecteerd, waarvan 10 als kwaadaardig zijn geclassificeerd (vulnerability scanners, brute force aanvallen, DDoS-pogingen). Bij low severity daalt de precision naar 42,9\%, wat aangeeft dat het model bij de mildste afwijkingen vaker normaal gebruikersgedrag als anomalie classificeert.
+ 
+\subsection{Voorbeelden van gedetecteerde anomalieën}
 
+TODO
+ 
+% Om de werking van het model te illustreren worden drie representatieve detecties besproken die door de security-analist zijn beoordeeld.
+ 
+% \textbf{Voorbeeld 1: Vulnerability scanner (malicious).} Het IP-adres 107.173.39.70 werd gedetecteerd met severity critical. De analist stelde vast dat dit IP continu van user-agent wisselde en probeerde bestanden zoals \textit{secrets.json} op te vragen. Dit is een typische vulnerability scanner die systematisch bekende kwetsbare paden afzoekt.
+ 
+% \textbf{Voorbeeld 2: Verdachte bot (suspicious).} Het IP-adres 51.158.106.136 werd gedetecteerd met severity medium. De analist stelde vast dat dit IP uitsluitend XML-bestanden opvroeg, wat kan wijzen op verkenningsactiviteit van de applicatiestructuur. De intentie kon niet eenduidig als kwaadaardig worden vastgesteld.
+ 
+% \textbf{Voorbeeld 3: Ad-bot (benign).} Het IP-adres 108.177.2.4 werd gedetecteerd met severity high. De analist identificeerde dit als een bekende advertentiebot. Het gedrag wijkt af van normaal menselijk verkeer, maar is niet kwaadaardig. Het model detecteert dit terecht als gedragsafwijking.
+ 
+\section{Operationele resultaten}
+\label{sec:operationele-resultaten}
+ 
+De near-real-time pipeline is operationeel getest gedurende de evaluatieperiode. De verwerkingstijd per pollcyclus bedraagt gemiddeld minder dan twee seconden. Met een polling-interval van 30 seconden resulteert dit in een effectieve detectielatentie van circa 30 seconden.
+ 
+De pipeline is geconfigureerd als een systemd-service die automatisch opstart bij een reboot van de VM en automatisch herstart bij een onverwachte crash. Gedetecteerde anomalieën worden persistent opgeslagen in een CSV-bestand dat bij herstart automatisch wordt ingelezen, zodat het Grafana-dashboard de volledige detectiehistorie behoudt.
+ 
+Het Grafana-dashboard biedt per gedetecteerd IP-adres de anomaliescore, de severity, de categorieën, en de drie meest afwijkende features met hun z-score ten opzichte van het trainingsgemiddelde. Via een data link kan de analist doorklikken naar de onderliggende Elasticsearch-logs voor gedetailleerd onderzoek.
+ 
+\section{Samenvatting van de resultaten}
+\label{sec:samenvatting-resultaten}
+ 
+Tabel~\ref{tab:samenvatting-resultaten} geeft een overzicht van alle evaluatieresultaten.
+ 
+\begin{table}[h]
+\centering
+\caption{Samenvatting van de evaluatieresultaten.}
+\label{tab:samenvatting-resultaten}
+\begin{tabular}{l l r}
+\hline
+\textbf{Onderdeel} & \textbf{Metriek} & \textbf{Waarde} \\
+\hline
+Evaluatiedataset & Logrecords & 331.571 \\
+Evaluatiedataset & Unieke IPs & 8.018 \\
+Evaluatiedataset & Feature-vectoren & 38.087 \\
+Evaluatiedataset & Evalueerbare IPs ($\geq$ 10 requests) & 1.263 \\
+Model & Gedetecteerde anomalie-IPs & 290 \\
+Akamai vergelijking & Model + Akamai overlap & 232 (80,0\%) \\
+Akamai vergelijking & Model-only vondsten & 58 (20,0\%) \\
+Akamai vergelijking & Proxy recall WAF & 95,7\% \\
+Akamai vergelijking & Proxy recall CUSTOM & 96,8\% \\
+Akamai vergelijking & Proxy recall BOT & 35,2\% \\
+Handmatige validatie & Precision (breed) & 83,3\% \\
+Handmatige validatie & False positive rate & 16,7\% \\
+Handmatige validatie & Precision critical & 100,0\% \\
+Operationeel & Detectielatentie & $\sim$30 seconden \\
+Operationeel & Verwerkingstijd per cyclus & $<$ 2 seconden \\
+\hline
+\end{tabular}
+\end{table}
+ 
 \subsection{Beperking: recall}
-
-Een belangrijke beperking is dat recall niet berekend kan worden. Recall vereist kennis van het totale aantal werkelijke anomalieën in de dataset, inclusief de anomalieën die het model niet heeft gedetecteerd. Zonder een volledig gelabelde dataset is het onmogelijk om te bepalen hoeveel afwijkend verkeer het model heeft gemist. Vergelijkbaar onderzoek van Chua et al.~\autocite{Chua2024} bereikte een recall van 90\% met Isolation Forest op webverkeer, wat een indicatie biedt maar niet rechtstreeks overdraagbaar is naar de context van dit onderzoek. Het labelen van een representatieve subset van de Akamai logs door het security team van Evolane zou de berekening van recall mogelijk maken, maar valt buiten de scope van dit proof of concept.
+ 
+Een belangrijke beperking is dat de werkelijke recall van het model niet berekend kan worden zonder een volledig gelabelde dataset. De proxy recall ten opzichte van Akamai biedt een benadering: op WAF-regels bereikt het model 95,7\% en op CUSTOM-regels 96,8\%, wat aantoont dat het model vrijwel alle applicatie-aanvallen detecteert die Akamai ook ziet. De lagere proxy recall op BOT-regels (35,2\%) weerspiegelt het verschil in detectiemethode: Akamai detecteert bots op basis van sommige HTTP-headers waartoe het model geen toegang heeft, terwijl veel van deze bots op gedragsniveau niet afwijken van normaal verkeer.
+ 
+Een bijkomende beperking is het gebruik van een sliding window van vijf minuten met een minimum van tien requests. IPs die minder dan tien requests per vijf minuten uitvoeren worden niet geëvalueerd, waardoor zogenaamde low-and-slow aanvallen buiten het bereik van het model vallen. Van de 8.018 unieke IPs in de evaluatiedataset konden er slechts 1.263 (15,8\%) daadwerkelijk door het model worden geëvalueerd.

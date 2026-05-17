@@ -57,6 +57,8 @@ Akamai App \& API Protector is een geïntegreerde beveiligingsoplossing die webb
 
 De bescherming van webapplicaties gebeurt via een regelgebaseerde evaluatie van inkomende requests. Indien een request voldoet aan vooraf gedefinieerde criteria, past het platform een set beveiligingscontroles toe. Indien een aanvalsvector wordt gedetecteerd, wordt de toegang geblokkeerd of wordt er een alert gegenereerd afhankelijk van de geconfigureerde instellingen\autocite{Technologies2026}.
 
+Voor botdetectie maakt het platform gebruik van Bot-manager-module, die naast regelgebaseerde signaturen ook machine learning inzet voor het detecteren van bots. Deze module richt zich op een breed spectrum aan detectiemethoden: browser fingerprinting, request-anomalieën, reputatiescoring en gedragsanalyse. De Bot manager is specifiek ontworpen voor het indentificeren van bots binnen het verkeer tussen de menselijke gebruikers.%https://www.akamai.com/products/bot-manager 
+
 Voor API-bescherming biedt het platform zichtbaarheid over alle API-endpoints binnen een omgeving, inclusief niet-gedocumenteerde of zogenaamde shadow  API's. Het platform analyseert API-verkeer op basis van vooraf bepaalde beleidsregels en detecteert afwijkingen zoals buitensporige requests of ongeautoriseerde toegangspogingen\autocite{Akamai2025}.
 \subsection{De toegevoegde waarde van ML in SOC-context}
 \label{subsec:toegevoegde-waarde-ML}
@@ -111,28 +113,18 @@ De voornaamste restrictie van een semi-supervised benadering is dat er hoewel in
 
 \paragraph{Random Forest}
 
-Random Forest is een ensemble-gebaseerde supervised machine learning algoritme
-dat gebruikt kan worden voor anomaliedetectie. Het model bestaat uit een
-verzameling van decision trees, waarbij elke boom getrained wordt op een
-willekeurige subset uit de trainingsdata en een willekeurige set van features
-gebruikt\autocite{Breiman2001}.
+Random Forest is een ensemble-gebaseerde supervised machine learning algoritme dat gebruikt kan worden voor anomaliedetectie. 
+Het model bestaat uit een verzameling van decision trees, waarbij elke boom getrained wordt op een willekeurige subset uit de trainingsdata en een willekeurige set van features gebruikt\autocite{Breiman2001}.
 
-Random Forest kan herleid worden tot een verzameling boomgebaseerde classifiers,
-waar elke boom opgebouwd is door een onafhankelijke en identieke vector die
-willekeurig gekozen is door het model. Voor een gegeven inputvector zal het model
-een voorspelling geven, waarna de classificatie bepaald wordt door majority voting.
-In de context van anomaliedetectie zal de boom een classificatie geven zoals
-``normaal'' of ``anomalie'', en de uiteindelijke beslissing is gebaseerd op een
-meerderheid in stemmen\autocite{}.
+Random Forest kan herleid worden tot een verzameling boomgebaseerde classifiers, hierbij is elke boom opgebouwd door een onafhankelijke en identieke vector die willekeurig gekozen is door het model. 
+Voor een gegeven inputvector zal het model een voorspelling geven, waarna de classificatie bepaald wordt door majority voting.
+In de context van anomaliedetectie zal de boom een classificatie geven zoals normaal of anomaal, en de uiteindelijke beslissing is gebaseerd op een meerderheid in stemmen\autocite{Primartha2017}.
 
-Binnen Random Forest zijn er enkele essentiële parameters die direct invloed
-hebben op de werking en stabiliteit van het model. De \texttt{n\_estimators}
-parameter staat in voor het aantal decision trees binnen het ensemble; een hoger
-aantal bomen verhoogt de stabiliteit maar heeft ook rechtstreeks invloed op de
-rekencomplexiteit. De \texttt{max\_features} parameter bepaalt hoeveel features
-willekeurig gekozen worden per splitsing in de decision tree\autocite{Breiman2001}.
+Binnen Random Forest zijn er enkele essentiële parameters die direct invloed hebben op de werking en stabiliteit van het model. 
+De \texttt{n\_estimators} parameter staat in voor het aantal decision trees binnen het ensemble; een hoger aantal bomen verhoogt de stabiliteit maar heeft ook rechtstreeks invloed op de rekencomplexiteit. 
+De \texttt{max\_features} parameter bepaalt hoeveel features willekeurig gekozen worden per splitsing in de decision tree\autocite{Breiman2001}.
 
-Een fundamentele beperking van Random Forest is de nood aan gelabelde training.sdata
+Een fundamentele beperking van Random Forest is de nood aan gelabelde trainings data
 waarbij elk datapunt in de dataset gelabeld moet zijn als normaal of anomaal. Dit maakt Random Forest minder geschikt voor omgevingen waarin de aard van het verkeer niet op voorhand gekend is en de nadruk ligt op het ontdekken van voorheen onbekende anomalieën~\autocite{Breiman2001}
 
 \textbf{Voordelen:}
@@ -156,15 +148,15 @@ waarbij elk datapunt in de dataset gelabeld moet zijn als normaal of anomaal. Di
 
 \paragraph{Support Vector Machine}
 
-Support Vector Machine is een supervised classificatiealgoritme dat een
-scheidingslijn genaamd de hyperplane trekt tussen twee klassen. Bij binaire
-classificatie zoals het onderscheid maken tussen normaal en anomalie, probeert
-SVM de grens te vinden die de twee klassen scheidt met een zo groot mogelijke
-marge. De marge is de afstand tussen de beslissingsgrens en de datapunten van
-beide klassen die zich het dichtst bij bevinden, deze datapunten worden ook wel
-de support vectors genoemd. Door de marge zo groot mogelijk te maken kan SVM
-beter generaliseren naar nieuwe data en is het minder gevoelig aan kleine
-variaties in de set\autocite{Cortes1995}.
+Support Vector Machine is een supervised classificatiealgoritme dat een scheidingslijn genaamd de hyperplane trekt tussen twee klassen. 
+Bij binaire classificatie zoals het onderscheid maken tussen normaal en anomalie, probeert SVM de grens te vinden die de twee klassen scheidt met een zo groot mogelijke marge. 
+De marge is de afstand tussen de beslissingsgrens en de datapunten van beide klassen die zich het dichtst bij bevinden, deze datapunten worden ook welde support vectors genoemd. 
+Door de marge zo groot mogelijk te maken kan SVM beter generaliseren naar nieuwe data en is het minder gevoelig aan kleine variaties in de set\autocite{Cortes1995}.
+
+In tegenstelling tot de praktijk is hier data zelden linair scheidbaar: de grens tussen normaal of anomaal kan zelden met een rechte lijn worden getrokken. 
+Om deze uitdaging aan te pakken maakt SVM gebruik van kernelfuncties. Een kernelfunctie transformeert data richting een hogere dimensionale ruimte waarin de data dan weer wel linair scheidbaar is, dit wordt ook wel de kernel trick genoemd.
+Het gebruik van een kernelfunctie heeft ook een rechtstreeks positieve invloed op de berekening van de transformatie. 
+SVM gebruikt voornamelijk kernelfuncties zoals de lineaire kernel, de polynomiale kernel en de Radial Basis Function kernel. De keuze van kernel is sterk afhankelijk met de structuur van de data. %BRON: 
 
 \textbf{Voordelen:}
 \begin{itemize}
@@ -187,19 +179,21 @@ variaties in de set\autocite{Cortes1995}.
 
 \paragraph{Isolation Forest}
 
-Isolation Forest is een unsupervised anomaliedetectiemethode dat vertrekt vanuit
-een andere invalshoek ten opzichte van andere ML modellen: in plaats van een
-profiel op te bouwen van hoe normaal gedrag eruitziet, focust Isolation Forest
-zich op het isoleren van afwijkende datapunten. Dit is mogelijk doordat het model
-ervan uitgaat dat anomalieën doorgaans zeldzaam zijn en afwijkende waarden
-bezitten\autocite{Liu2008}.
+Isolation Forest is een unsupervised anomaliedetectiemethode dat vertrekt vanuit een andere invalshoek ten opzichte van andere ML modellen: in plaats van een profiel op te bouwen van hoe normaal gedrag eruitziet, focust Isolation Forest zich op het isoleren van afwijkende datapunten. 
+Dit is mogelijk doordat het model ervan uitgaat dat anomalieën doorgaans zeldzaam zijn en afwijkende waarden bezitten\autocite{Liu2008}.
 
-Het algoritme bouwt een vooraf gedefinieerd aantal binaire decision trees. In
-elke boom wordt iteratief een willekeurige feature en een willekeurige
-splitswaarde geselecteerd om datapunten te scheiden. De nodige padlengte om een
-datapunt volledig te isoleren wordt gemeten en genormaliseerd tot een anomaliescore
-tussen 0 en 1. Datapunten met een korte gemiddelde padlengte over alle bomen heen
-krijgen een hoge anomaliescore\autocite{Lesouple2021}.
+Het algoritme bouwt een vooraf gedefinieerd aantal binaire decision trees. 
+In elke boom wordt iteratief een willekeurige feature en een willekeurige splitswaarde geselecteerd om datapunten te scheiden. 
+De nodige padlengte om een datapunt volledig te isoleren wordt gemeten en genormaliseerd tot een anomaliescore tussen 0 en -1.
+Datapunten met een korte gemiddelde padlengte over alle bomen heen krijgen een hoge anomaliescore\autocite{Lesouple2021}.
+
+Isolation Forest maakt gebruik van subsampeling voor het trainen van de decision trees binnen het model, dit wil zeggen dat niet elke boom getrained wordt op de volledige dataset maar op een willekeurige subset van de data.
+Dit verbetert de detectiekwaliteit van het model doordat het 2 fenomenen tegengaat. 
+Enerzijds voorkomt het masking, dit is wanneer datapunten die dicht bij elkaar liggen in een grote dataset onterecht door het model zouden worden beschouwd als een kleine groep legitieme data. 
+Anderzijds voorkomt het swamping, dit is het tegenovergestelde van masking, hierbij worden datapunten die zicht dicht tegen de rand bevinden verward als anomaal. 
+Een ander voordeel van subsampeling is dat het model efficiënt schaalt naar grote datasets doordat de trainingstijd per boom beperkt blijft. 
+Bij de training van het model dient een contamination-parameter te worden gedefineerd. Deze parameter is verantwoordelijk voor het bepalen welk percentage van de data het model zal classificeren als afwijkend.
+De keuze van deze parameter is afhankelijk van de context van het model en de data en heeft rechtstreekt invloed op de balans tussen het detecteren van normaal of anomaal verkeer\autocite{Liu2008}. 
 
 \textbf{Voordelen:}
 \begin{itemize}
@@ -225,24 +219,15 @@ krijgen een hoge anomaliescore\autocite{Lesouple2021}.
 
 \paragraph{Local Outlier Factor}
 
-Local Outlier Factor is een unsupervised anomaliedetectiemethode die afwijkende
-datapunten detecteert op basis van dichtheidsverschillen. LOF evalueert een
-datapunt relatief ten opzichte van zijn k-dichtste buren.
+Local Outlier Factor is een unsupervised anomaliedetectiemethode die afwijkende datapunten detecteert op basis van dichtheidsverschillen. LOF evalueert een datapunt relatief ten opzichte van zijn k-dichtste buren.
 
-Het algoritme start met het berekenen van de \texttt{k-distance}, dit is de
-afstand tussen het datapunt en de k-de dichtste buur. Vervolgens wordt de
-reachability distance berekend, een metric die instabiliteit in de meting
-voorkomt zodat twee punten die dicht bij elkaar liggen niet automatisch als
-normaal worden beschouwd. De uiteindelijke LOF-score is de verhouding tussen
-de gemiddelde lokale dichtheid van de buren van het datapunt en de lokale
-dichtheid van het punt zelf. Wanneer de LOF-waarde zakt onder 1 wijst dit op
-een lagere dichtheid ten opzichte van andere punten en dus een mogelijke
-anomalie\autocite{Mavuduru2026}.
+Het algoritme start met het berekenen van de \texttt{k-distance}, dit is de afstand tussen het datapunt en de k-de dichtste buur. 
+Vervolgens wordt de reachability distance berekend, een metric die instabiliteit in de meting voorkomt zodat twee punten die dicht bij elkaar liggen niet automatisch als normaal worden beschouwd. 
+De uiteindelijke LOF-score is de verhouding tussen de gemiddelde lokale dichtheid van de buren van het datapunt en de lokale dichtheid van het punt zelf. 
+Wanneer de LOF-waarde zakt onder 1 wijst dit op een lagere dichtheid ten opzichte van andere punten en dus een mogelijke anomalie\autocite{Mavuduru2026}.
 
-De voornaamste parameter van LOF is \texttt{k}, het aantal buren dat het model
-evalueert. Een kleinere k-waarde maakt het model gevoeliger voor lokale
-variaties, een grotere k-waarde maakt het model beter bestendig tegen false
-positives maar ook minder gevoelig voor lokale anomalieën.
+De voornaamste parameter van LOF is \texttt{k}, het aantal buren dat het model evalueert. 
+Een kleinere k-waarde maakt het model gevoeliger voor lokale variaties, een grotere k-waarde maakt het model beter bestendig tegen false positives maar ook minder gevoelig voor lokale anomalieën.
 
 Het voornaamste verschil met isolation forest is dat LOF anomalieën detecteert op basis van relatieve dichtheidsverschillen, dit maakt het model effectiever in het detecteren van lokale anomalieën die zich dichter bevinden bij normale clusters. 
 De berekining van de k-nearest neighbors voor elk datapunt schaalt kwadratisch waardoor het minder geschikt is voor grote datasets in een real-time omgeving~\autocite{Breunig2000}. 
@@ -278,14 +263,9 @@ getraind wordt op data die als normaal wordt beschouwd. Het doel is om een
 beslissingsgrens te leren die de normale data zo goed mogelijk omvat en
 afwijkende punten uitsluit.
 
-In tegenstelling tot de klassieke SVM, die twee klassen van elkaar scheidt, zal
-OC-SVM proberen om een hyperplane te vinden die de data scheidt van de oorsprong.
-Doordat datapunten niet altijd direct scheidbaar zijn, maakt SVM gebruik van een
-kernelfunctie die data projecteert naar een hogere dimensionale ruimte waardoor
-scheiding mogelijk wordt. Het model gebruikt een parameter die de balans bepaalt
-tussen de toegestane outliers en de complexiteit van het model: enerzijds bepaalt
-deze een bovengrens voor het aantal toegestane anomalieën, anderzijds een
-ondergrens voor de toegestane hoeveelheid support vectors\autocite{Hejazi2013}.
+In tegenstelling tot de klassieke SVM, die twee klassen van elkaar scheidt, zal OC-SVM proberen om een hyperplane te vinden die de data scheidt van de oorsprong.
+Doordat datapunten niet altijd direct scheidbaar zijn, maakt SVM gebruik van een kernelfunctie die data projecteert naar een hogere dimensionale ruimte waardoor scheiding mogelijk wordt. 
+Het model gebruikt een parameter die de balans bepaalt tussen de toegestane outliers en de complexiteit van het model: enerzijds bepaalt deze een bovengrens voor het aantal toegestane anomalieën, anderzijds een ondergrens voor de toegestane hoeveelheid support vectors\autocite{Hejazi2013}.
 
 De belangrijkste hyperparameter bij one-class SVM is de $\nu$-parameter (\textit{nu}), een waarde tussen 0 en 1 met 2 belangrijke functies. 
 Het dient als een bovengrens op het onderdeel aan trainingsfouten, dit zijn de outliers binnen de trainingsdata, en eveneens als een ondergrens op het onderdeel van de support vectors.
@@ -313,19 +293,14 @@ Een lagere $\nu$-waarde kan resulteren in een striktere beslissingsgrens die min
 
 \paragraph{Autoencoder}
 
-Autoencoders worden binnen anomaliedetectie voornamelijk toegepast op een
-semi-supervised manier door het model te trainen op normale data, waarbij het
-leert om deze data zo goed mogelijk te reconstrueren. Het model legt de structuur
-van normale data vast waardoor het in staat is om gelijkaardige input succesvol
-te reconstrueren, terwijl afwijkende data minder goed gereconstrueerd wordt.
 
-De autoencoder leert impliciet de normale structuur te modelleren, waardoor nieuwe
-input tijdens de inferentie geprojecteerd wordt naar de dichtstbijzijnde
-representatie van normale data. Indien de input overeenkomt met het geleerde
-patroon, zal het model deze goed kunnen reconstrueren. Indien de input afwijkingen
-bevat, zal de reconstructiefout hoger zijn. De detectie van anomalieën gebeurt
-door het verschil tussen de originele input en de reconstructie te
-berekenen\autocite{Chikezie2025}.
+Een autoencoder is een neuraal netwerk bestaande uit 2 componenten: een encoder en een decoder. Deze twee componenten zijn verbonden door een tussenlaag genaamd latent space. 
+De encoder comprimeert de input in het model naar een compacte representatie in deze latent space, dit zorgt ervoor dat enkel de meest essentiële kenmerken van de data worden behouden. 
+Vervolgens probeert de decoder vanuit deze compacte representatie de oorspronkelijke output zo nauwkeurig mogelijk te reconstrueren. Het model wordt getrained de reconstructiefout, het verschil tussen originele input en gereconstrueerde output, te minimaliseren\autocite{Chikezie2025}.
+
+Autoencoders worden in de context van anomaliedetectie voornamelijk op een semi-supervised manier geïmplementeerd. Doordat het model getraind wordt op normale input, is het instaat om gelijkaardige input te reconstrueren.
+Echter wanneer input het model passeert dat eerder afwijkend is van het geleerde patroon, zal de reconstructiefout aanzienlijk hoger liggen doordat in de latent space niet de juiste representatie gevormd kon worden. Deze reconstructiefout is de basis als indicator voor een mogelijk anomalie\autocite{Chikezie2025}. 
+
 
 Een datapunt wordt als anomalie beschouwd wanneer de reconstructiefout de vooraf bepaalde drempelwaarde overschrijdt. Een te lage drempelwaarde kan leiden tot een overvloed aan false positives, terwijl een te hoge waarde mogelijks anomalieën zal missen\autocite{Angiulli2023}.
 
@@ -347,6 +322,7 @@ Een datapunt wordt als anomalie beschouwd wanneer de reconstructiefout de vooraf
     \item Gevoeligheid voor generalisatie-effecten zoals interpolatie en
     extrapolatie, waardoor anomalieën kunnen overlappen met normale data en
     onopgemerkt blijven\autocite{Bouman2025}.
+    \item De keuze van de netwerk-architectuur, waaronder het aantal lagen en de dimensie van de bottleneck-laag, vereist experimentatie en afstemming. Een te grote bottleneck kan ertoe leiden dat het model ook afwijkende data goed reconstrueert, waardoor anomalieën worden gemist \autocite{Chikezie2025}.
 \end{itemize}
 \clearpage
 \begin{table}[H]
@@ -409,75 +385,71 @@ Machine-learningmodellen in de context van anomaliedetectie worden getrained op 
 \subsection{Belang van data quality}
 \label{subsec:toegevoegde-waarde-ML}
 % Uitleggen waarom goede data data essentieel is voor ML success 
-Anomaliedetectie binnen Web- en API-beveiliging is sterk afhankelijk van de beschikbare data. Slechte data kwaliteit zoals onvolledige, inconsistente API metrics zorgen voor onnauwkeurige resultaten en verhogen het risico op false positives en negatives. Het verzekeren van data integriteit door correcte collectie, opslag en preprocessing is cruciaal voor effectieve anomalie detectie \Autocite{Meegle2025}.
+Anomaliedetectie binnen Web- en API-beveiliging is sterk afhankelijk van de beschikbare data. Slechte data kwaliteit zoals onvolledige, inconsistente API of web metrics zorgen voor onnauwkeurige resultaten en verhogen het risico op false positives en negatives. Het verzekeren van data integriteit door correcte collectie, opslag en preprocessing is cruciaal voor effectieve anomalie detectie \Autocite{Meegle2025}.
 
-\subsection{Essentiële features uit Akamai logs}
-\label{subsec:toegevoegde-waarde-ML}
+\subsection{Van ruwe logdata naar gedragsprofielen}
+\label{subsec:log-gedrags}
 % Lijst de belangrijkste features voor anomaly detection in Web en API-context
-Logvelden zoals een IP-adres of een geo-locatie vertellen weinig op zichzelf voor een machine-learningmodel. De meerwaarde onstaat doormiddel van deze velden te aggregeren naar features die gedragspatronen tonen over een tijdsvenster. Daarom is feature engineering een bepalende stap voor de detectiecapaciteit van het model te verhogen\autocite{Sowmya2023}. 
-
-Zoals eerder beschreven in sectie~\ref{subsec:belang-tijd} is het belangrijk om alle features te berekenen over een tijdsvenster, gegroepeerd per client-ip. Aangezien binnen dit onderzoek 2 aparte typen verkeer besproken wordt splitsen we de features op in 2 groepen: web-specififeke features en api-specififeke features. 
-
+Ruwe logvelden zoals IP-adres, statuscode of referrer vertellen op zichzelf weinig of een client zich al dan wel of niet normaal gedraagt. Een enkele request dat een 404 statuscode heeft is op zich niet verdacht, maar tientallen 404 requests van hetzelfde ip binnen een tijdsframe van enkele minuten kan wijzen op scanning. 
+De meerwaarde voor een machine learning model ontstaat pas wanneer individuele logvelden worden samengevoegd en afgeleide kenmerken worden berekend die een gedragspatroon kunnen beschrijven over een tijdsvenster.
+Dit proces wordt beschreven als feature engineering en is een belangrijke stap in anomalie detectie, zonder betekenisvolle features is het voor een goed presterend algoritme onmogelijk om een onderscheid te kunnen maken tussen normaal of afwijkend verkeer.%chandola en sowmya
+Aangezien web- en API-verkeer verschillende kenmerken vertonen en andere aanvalspatronen kennen, spiltsen we binnen dit onderzoek de relevante features op in twee groepen. 
 \subsubsection{API-specifieke features}
 Voor het anomaliedetectie model voor API-verkeer, wordt er vertrokken van een set ruwe logvelden die rechtstreekse relevant zijn aan de API-endpoints: client IP-adres, API-endpoint, response data size, HTTP-statuscode, timestamp en request type. Deze kenmerken worden niet rechtstreeks gebruikt als input voor het model maar, dienen eerst te worden geaggregeerd over een tijdsvenster en dit expliciet per client-IP~\autocite{Sowmya2023}. 
 
-De eerste kernfeature voor het model is api-access-unique dit is de verhouding tussen het aantal uniek aangesproken APIs en het totale aantal API calls binnen het tijdsvenster. Een lage verhouding wijst erop dat relatief veel requests naar weinig verschillende endpoints gaan, dit kan wijzen op een brute force aanval of end point abuse~\autocite{Sowmya2023}. 
+De afgeleide features worden onderverdeeld in drie categorieën: volumetrische kenmerken, responsekenmerken en endpoint gedragskenmerken. 
 
-De tweede kernfeature is total-calls dit is relevant als volumetrische indicator, een plotselinge stijging van requests per client-IP kan wijzen op request flooding of misbruik~\autocite{Sowmya2023}. 
+\textbf{Volumetrische kenmerken} beschrijven de intensiteit waarop een client de API endpoints aanspreekt. Het totale aantal API-calls per IP binnen het tijdsvenster is de meest directe aanwijzing dat een IP mogelijks bezig is met flooding van het endpoint of geautomatiseerd misbruik \autocite{Sowmya2023}. Wanneer een IP binnen een kort tijdsvenster een afwijkend groot datavolume ontvangt, kan dit ook wijzen op het systematisch ophalen van gevoelige gegevens via de API \autocite{Sowmya2023, OWASP2023}.
 
-Voor het detecteren van datalekken is het relevant om de totale hoeveelheid verzonden response bytes te berekenen in een tijdsvenster. Verdachte hoeveelheden data dat geexfiltreerd wordt kan wijzen op misbruik van de api~\autocite{Sowmya2023}.
+\textbf{Responsekenmerken} deze kenmerken beschrijven het resultaat van uitgevoerde requests richting de API. Een verhoogd aantal 4xx-statuscodes kunnen een aanwijzing zijn van verkennend gedrag waarbij een IP systematisch endpoints bevraagt\autocite{OWASP2023}.
 
-Een vierde en laatste feature is het aantal mislukte requests, dit zijn dus alle requests van het formaat 4xx deze bieden een sterke indicatie of verkennend gedrag van een aanval~\autocite{OWASP2023}. 
-
-
-
+\textbf{Endpoint gedragskenmerken} beschrijven hoe een IP de endpoints benadert. Hierbij zijn de kernfeatures het aantal aangesproken API-endpoints en het totale aantal requests. Een afwijkend volume kan wijzen op endpoint abuse of brute force-aanvallen\autocite{Sowmya2023}. Een hoge verhouding met veel unieke endpoints in een tijdsvenster kan wijzen op het systematisch in kaart brengen van het API-oppervlakte \autocite{OWASP2023}.
 
 \subsubsection{Web-specifieke features}
-Voor het model dat anomalieën detecteert in HTTP web-verkeer, wordt vertrokken vanaf basis webserverlogvelden zoals: source IP, timestamp, method, URI, referrer. Hier zullen we de gegevens groeperen per client-IP binnen een tijdsvenster. Deze kenmerken zullen nog verder aangevuld worden met afgeleide features die het gedrag van deze individuele clients beschrijven~\autocite{Chua2024}. 
+Voor het model dat anomalieën detecteert in HTTP web-verkeer, wordt vertrokken vanaf basis webserverlogvelden zoals: source IP, timestamp, method, URI, referrer. De gegevens worden gegroepeerd per source IP binnen een tijdsvenster, hierna worden voor dit specifieke ip relevante afgeleide features berekend die het gedrag van de client kunnen representeren~\autocite{Chua2024}. 
 
-Voor de afgeleide features maken we een onderscheid in frequentiekenmerken en inhoudelijke kenmerken: 
+De afgeleide features worden onderverdeeld in vier categorieën: frequentiekenmerken, inhoudskenmerken, timing-kenmerken en gedragskenmerken. Deze categorisatie sluit aan bij de aanbevelingen uit de literatuur om zowel intensiteit als aard van het clientgedrag te onderzoeken \autocite{Chua2024, Schummer2024}.
 
-Frequentiekenmerken beschrijven hoe intensief en op welke manier een client het systeem gebruikt binnen een bepaald tijdsvenster. Deze kenmerken worden berekend per IP-adres en geven inzicht in het algemene gebruikspatroon van een client.
+\textbf{Frequentiekenmerken} beschrijven hoe intensief en op welke manier een client het systeem gebruikt binnen een bepaald tijdsvenster. Deze kenmerken worden berekend per IP-adres en geven inzicht in het algemene gebruikspatroon van een client.
+De belangrijkste kenmerken zijn het totale aantal requests per IP en de verdeling van HTTP-statuscodes. Een afwijkend hoge frequentie aan requests kan wijzen op scraping of een DDoS-achtig patroon, terwijl hoge 4xx-responses kan duiden op scanning of brute force-pogingen\autocite{Chua2024, OWASP2023}.
 
-De belangrijkste frequentiekenmerken zijn:
-\begin{itemize}
-    \item Het aantal requests per IP binnen het tijdsvenster
-    \item De verdeling van statuscodes (zoals 2xx, 4xx en 5xx)
-\end{itemize}
+\textbf{Inhoudskenmerken} geven een beeld over de requests zelf. Afwijkende requests bevatten vaak een afwijkend patroon zoals lange URI's die kunnen wijzen op injection-pogingen. Relevante kenmerken kunnen de gemiddelde en maximale URI-lengte zijn en de frequentie van specifieke URI-patronen binnen één IP\autocite{Chua2024}. 
 
-Deze features maken het mogelijk om afwijkend gedrag te detecteren, zoals:
-\begin{itemize}
-    \item Een abnormaal hoge requestfrequentie, wat kan wijzen op scraping of DDoS-achtige patronen
-    \item Een verhoogde foutgraad (bijvoorbeeld veel 404- of 403-responses), wat kan duiden op scanning of brute-forcepogingen
-\end{itemize}
+\textbf{Timingkenmerken} beschrijven het tijds patroon van de requests. Normaal verkeer zal doorgaans variatie vertonen in de intervallen tussen requests, terwijl scripts en geautomatiseerde tools eerder uniforme intervallen vertonen. Daarom zijn de gemiddelde tijd en de standaardafwijking indicatieve features voor het onderscheid tussen menselijk of geautomatiseerd \autocite{Schummer2024, Benova2024}. 
 
-\subsubsection{Inhoudelijke kenmerken}
-
-Naast frequentie speelt ook de inhoud van de requests een belangrijke rol bij het detecteren van anomalieën. Daarom worden bijkomende kenmerken afgeleid uit de URI en andere requestvelden~\autocite{Chua2024}.
-
-De belangrijkste inhoudelijke kenmerken zijn:
-\begin{itemize}
-    \item \textbf{URI\_length}: de lengte van de opgevraagde URI
-    \item \textbf{URI\_occurrences}: de frequentie van specifieke URI’s of patronen binnen één IP
-\end{itemize}
-
-Deze kenmerken zijn relevant omdat kwaadaardige requests vaak afwijkende patronen bevatten, zoals abnormaal lange URI’s, herhaald gebruik van specifieke endpoints of de aanwezigheid van bekende aanvalspatronen~\autocite{Chua2024}.
+\textbf{Gedragskenmerken} representeren de consistentie en diversiteit in het gedrag van de client. Voorbeelden hiervan zijn het gebruik van verschillende HTTP-methoden, verhouding tussen unieke paden, totale aantal requests en consistentie in de user-agent. Normaal verkeer zal zich doorgaans beperken tot Get en POST methoden en zal zelden in een tijdsvenster wisselen van user-agent \autocite{Benova2024, Chua2024}.  
 
 \section{Evaluatie en performance metrics}
 \label{sec:ML-methoden-anomalie}
-\subsection{Klassieke metrics voor anomaliedetectie}
+\subsection{Evaluatie bij supervised anomaliedetectie}
+\label{subsec:toegevoegde-waarde-ML}
+Bij supervised anomaliedetectie beschikt de onderzoeker over ten minste één volledige gelabelde dataset waarbij elk punt expliciet geclassificeerd is als normaal of abnormaal. Dit maakt het mogelijk om de voorspellingen van het model rechtstreeks te vergelijken met de bekende grondwaarde en klassieke classificatiemetrics te berekenen \autocite{Goldstein2016}.
+
+Precision meet het aandeel correct gedetecteerde anomalieën ten opzichte van alle als anomalie geclassificeerde observaties. Recall meet het aantal correcte anomalieën ten opzichte van het totale aantal dat zich in de dataset bevindt. Beide metrics zijn belangrijk in de evaluatie van anomaliedetectie aangezien beide zich focussen op de minderheidsklasse binnen het model (de anomalieën) en zo een nauwkeuriger beeld bieden over de detectiekwaliteit. De F1-score combineert deze twee metrics als gemiddelde, waardoor de F1-score enkel kan stijgen indien beide waarden stijgen\autocite{Chadha2020}.  
+
+\subsection{Evaluatie bij unsupervised anomaliedetectie}
 \label{subsec:toegevoegde-waarde-ML}
 % Definiëren van de metrics die je gaat gebruiken voor de evaluatie van het model. 
-De keuze in Evaluatiecriteria is afhankelijk van toepassingscontext als de kenmerken van de beschikbare data. Meerdere evaluatiemaatstaven worden gebruikt voor het analyseren van de performantie en meerwaarde van een machine-learning gebaseerd algoritme in anomalie detectie\Autocite{Saabith2023}. 
+Bij unsuperised anomaliedetectie is een betrouwbare gelabelde dataset of grondwaarde doorgaans niet beschikbaar, dit is vaak ook de reden waarom in eerste instantie gekozen is voor de implementatie van een unsupervised model. Dit heeft echter wel rechtstreeks gevolgen op de evaluatie van het model, metrics zoals recall of F1-score vereisen kennis van het totale aantal werkelijke anomalieën die zich in de dataset bevinden \autocite{Goldstein2016}.
 
-Bij binaire classificatie, zoals anomaliedetectie, worden precision en recall gebruikt om de prestaties van een model te evalueren, nadrukkelijk bij niet gelijk verdeelde datasets. In dit geval zijn anomaliteiten zeldaam ten opzichte van normaal gedrag.
-Precision meet het aantal correct gedetecteerde anomalieën ten opzichte van alle als anomalie geclassificeerde observaties. Recall meet het aandeel correct gedetecteerde anomalieën ten opzichte van de werkelijke anomalieën. 
-Doordat er een class-imbalance is focust Precision en Recall zich op de minderheidsklasse in dit geval de anomalieën. 
-De F1-score is een gebalanceerde metric doordat het het harmonisch gemiddelde berekent van precision en recall dit zorgt ervoor dat de F1-score slechts stijgt wanneer beide onderdelen stijgen\autocite{Chadha2020}. %bron https://aman.ai/primers/ai/evaluation-metrics/?
+Om toch de detectiekwaliteit van deze modellen te kunnen beoordelen worden voor deze modellen vaak alternatieve strategieën gebruikt. Een veelgebruikte strategie is handmatige validatie, waarbij de detecties gevonden door een model worden beoordeeld door een domeinexpert of door de onderzoeker zelf \textcite{Chua2024} pasten deze aanpak toe door de testdata van hun Isolation Forest-model handmatig te labelen, waarna precision, recall en F1-score berekend konden worden.
+
+\textcite{Rochner2023} gebruikten een vergelijkbare strategie bij unsupervised anomaliedetectie in medische dossiers, waarbij domeinexperts een steekproef van de detecties beoordeelden om de precision van het model te kunnen bepalen. 
+
+In de praktijk worden meerdere technieken vaak gecombineerd om vanuit meerdere invalshoeken een beeld te creeëren over hoe het model detecteert, de keuze hiervan is vaak afhankelijk van de beschikbare methoden. 
 
 \section{Conclusie literatuurstudie}
 \label{sec:ML-methoden-anomalie}
 
+De literatuurstudie toont aan dat traditionele detectiesystemen zoals WAF's en signature based IDS-systemen effectief zijn in het herkennen van eerder geziene en gedocumenteerde dreigingen, maar beperkingen kunnen vertonen bij het detecteren van ongeziene of subtiele aanvalsvormen. Toenemende automatisering en complexiteit van aanvallen versterkt deze problematiek. 
+
+Uit de vergelijking van machine learning-benaderingen blijkt dat unsupervised methoden het meest geschikt zijn wanneer gelabelde trainingsdata ontbreekt, wat in de meeste operationele security-omgevingen het geval is. 
+
+Isolation Forest onderscheidt zich binnen deze categorie door zijn lineaire tijdcomplexiteit, lage geheugenverbruik en de eigenschap dat het anomalieën rechtstreeks isoleert in plaats van eerst normaal gedrag te modelleren. Dit maakt het bijzonder geschikt voor toepassing binnen een real-time detectiesysteem dat grote hoeveelheden logdata moet verwerken.
+
+Daarnaast blijkt feature engineering een bepalende invloed te hebben op de detectiekwaliteit van het model. Ruwe logvelden zeggen weinig op zich, de meerwaarde ontstaat door deze velden te aggregeren over een tijdsvenster en per client-IP, hierdoor worden gedragspatronen van gebruikers zichtbaar en kunnen afwijkingen worden gedetecteerd. 
+
+Deze inzichten vormen de basis voor de modelkeuze, feature engineering en architectuur van het proof-of-concept dat in de volgende hoofdstukken wordt uitgewerkt.
 % Voorbeeldtekst van het sjabloon  
 
 

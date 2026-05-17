@@ -31,14 +31,41 @@
 \subsection{Requirementsanalyse}
 \label{subsec:Requirementsanalyse}
 %Het doel van dit onderdeel is om in een interview met het evolane team de functionele en niet-functionele requirements zijn voor het anomaliedetectiesysteem. 
-Voor dit deel van het onderzoek werden leden van het securityteam ondervraagd naar wat voor hun de functionele en niet functionele vereisten zijn voor het anomaliedetectiesysteem. 
+
+De doelstelling van dit proof of concept is het ontwikkelen van een prototype voor anomaliedetectie dat automatisch afwijkend gedrag in webverkeer identificeert op basis van Akamai access logs. Het systeem dient als aanvulling op de bestaande regelgebaseerde detectie van Akamai App \& API Protector en moet integreerbaar zijn met de bestaande monitoring-omgeving van Evolane.
+
+\subsubsection{Functionele vereisten}
+ 
+\begin{itemize}
+    \item \textbf{Detectie van afwijkend verkeer:} het systeem moet in staat zijn om anomalieën in webverkeer te identificeren op basis van gedragspatronen, zonder afhankelijk te zijn van vooraf gedefinieerde aanvalssignaturen. Dit omvat onder andere DDoS- en DoS-patronen, botverkeer, vulnerability scanning en brute force pogingen.
+    \item \textbf{Near-real-time verwerking:} het systeem moet nieuwe logs binnen een aanvaardbare vertraging kunnen verwerken en beoordelen, zodat het SOC-team tijdig kan reageren op gedetecteerde anomalieën.
+    \item \textbf{Bruikbare alerts:} elke gedetecteerde anomalie moet voldoende context bevatten zodat een security-analist in staat is om het gedrag te beoordelen. 
+    \item \textbf{Beperking van herhaalde alerts:} het systeem moet voorkomen dat hetzelfde IP-adres herhaaldelijk dezelfde anomalie genereert, zodat het overzicht voor het SOC-team bewaard blijft.
+    \item \textbf{Vergelijking met Akamai:} het systeem moet inzicht bieden in de overlap en complementariteit met de bestaande Akamai-detectie, zodat duidelijk is welke anomalieën een meerwaarde vormen ten opzichte van de regelgebaseerde aanpak.
+\end{itemize}
+ 
+\subsubsection{Niet-functionele vereisten}
+ 
+\begin{itemize}
+    \item \textbf{Integratie met bestaande tooling:} het systeem moet integreerbaar zijn met de bestaande monitoring-omgeving van Evolane, specifiek met Grafana voor visualisatie en Elasticsearch als databron.
+    \item \textbf{Beperking van false positives:} het systeem moet een aanvaardbaar lage false positive rate bereiken om alert fatigue bij het SOC-team te voorkomen. Een false positive is hierbij gedefinieerd als een normale menselijke gebruiker die onterecht als anomalie wordt geclassificeerd.
+    \item \textbf{Configureerbaarheid:} de parameters van het systeem, zoals het polling-interval, de venstergrootte, de filterregels en de verbindingsgegevens, moeten centraal configureerbaar zijn zodat het systeem inzetbaar is voor meerdere klantomgevingen zonder aanpassing van de broncode.
+\end{itemize}
+
+De eigen website van Evolane werd aangeboden als testomgeving voor het proof of concept, aangezien deze regelmatig het doelwit is van aanvallen en daarmee representatief verkeer bevat voor de evaluatie van het anomaliedetectiesysteem.
+%Focus op real-time detectie
+%Duidelijkheid bieden aan een soc analist waarom iets gevlagd is als een anomalie
+%Overzichtelijk zijn wat er precies gaande is. 
+
 \subsection{Dataverzameling en normalisatie}
 \label{subsec:dataverzameling en normalisatie}
 %Het doel van dit onderdeel is om een datastroom op te zetten van de Akamai access logs zodat we python kunnen gebruiken voor deze op te schonen en het doel is om een gestructureerde set op te bouwen in CSV formaat. 
 
-Om een reproduceerbare en herbruikbare dataset op te bouwen, wordt een datastroom opgezet op basis van Akamai access logs. Deze logs bevatten onder meer informatie over client-IP-adressen, gebruikte API-endpoints, HTTP-methodes, statuscodes, responsegroottes en tijdstempels. Indien relevant worden bijkomende SIEM-events geïntegreerd om extra context toe te voegen.
+Om een reproduceerbare en herbruikbare dataset op te bouwen, wordt een datastream opgezet op basis van Akamai access logs. Deze logs bevatten onder meer informatie over client-IP-adressen, HTTP-methodes, statuscodes, responsegroottes en tijdstempels.
 
-De ruwe loggegevens worden verwerkt met behulp van Python. De library \texttt{pandas} wordt gebruikt voor data cleaning, parsing en preprocessing. Dit omvat onder andere het verwijderen van onvolledige of corrupte records, het uniformeren van tijdsformaten, het omzetten van categorische variabelen en het structureren van de data in een consistent schema.
+De logdata wordt via een geconfigureerde datastream doorgestuurd naar een Elasticsearch-cluster dat door Evolane wordt beheerd.
+
+Dit omvat onder andere het verwijderen van onvolledige of corrupte records, het uniformeren van tijdsformaten, het omzetten van categorische variabelen, het filteren van monitoring- en health-check-verkeer en het structureren van de data in een consistent schema.
 
 Na normalisatie worden de gegevens opgeslagen in een gestructureerd CSV-formaat. Deze gestructureerde dataset vormt de basis voor verdere analyse, feature engineering en modeltraining binnen het proof-of-concept.
 
@@ -46,7 +73,7 @@ Na normalisatie worden de gegevens opgeslagen in een gestructureerd CSV-formaat.
 \label{subsec:Feature engineering}
 % Het doel is om op basis van de literatuurstudie een selectie maken van de kenmerken waarop het model zal draaien. Uit deze stap moet een feature set komen die geschikt is voor toepassing. 
 
-In deze fase worden betekenisvolle kenmerken (features) geëxtraheerd uit de genormaliseerde dataset. De selectie van deze features is gebaseerd op inzichten uit de literatuurstudie rond anomaliedetectie in web- en API-verkeer.
+In deze fase worden betekenisvolle kenmerken (features) geëxtraheerd uit de genormaliseerde dataset. De selectie van deze features is gebaseerd op inzichten uit de literatuurstudie rond anomaliedetectie in webverkeer.
 
 Voorbeelden van potentiële features zijn onder meer:
 - Aantal requests per client binnen een bepaald tijdsvenster  
@@ -55,7 +82,7 @@ Voorbeelden van potentiële features zijn onder meer:
 - Gemiddelde en afwijkende responsegroottes  
 - Tijd tussen opeenvolgende requests  
 
-De data wordt geaggregeerd over vooraf gedefinieerde tijdsvensters (bijvoorbeeld per minuut of per vijf minuten) en gegroepeerd per client, endpoint of sessie. Op die manier worden gedragsprofielen opgebouwd die normaal gebruik representeren. 
+De data wordt geaggregeerd over overlappende tijdsvensters van vijf minuten met een verschuivingsstap van één minuut, gegroepeerd per client-IP.Per venster worden frequentiekenmerken berekend zoals het aantal requests en de verdeling van statuscodes, timing-kenmerken zoals de gemiddelde tijd tussen requests, inhoudskenmerken zoals URI-lengte en responsgrootte, en gedragskenmerken zoals user-agent-consistentie en de verhouding tussen unieke paden en het totale aantal requests. Op die manier worden gedragsprofielen opgebouwd die normaal gebruik representeren. 
 
 Het resultaat van deze fase is een feature-set die geschikt is voor toepassing binnen machine-learningmodellen voor anomaliedetectie.
 
@@ -64,7 +91,7 @@ Het resultaat van deze fase is een feature-set die geschikt is voor toepassing b
 \label{subsec:traditioneel-beperkingen}
 % Binnen de literatuurstudie onderzoeken we welke machine learning benaderingen er effectief zijn, en hier gaan we dan een selectie maken welke geschikt zijn voor het proof of concept op basis van de beschikbare data
 
-Op basis van de literatuurstudie en de kenmerken van de beschikbare data wordt een geschikte machine-learningbenadering geselecteerd. Aangezien de dataset voornamelijk niet-gelabelde data bevat, ligt de focus op unsupervised en semi-supervised anomaliedetectietechnieken.
+Op basis van de literatuurstudie en de kenmerken van de beschikbare data wordt een geschikte machine-learningbenadering geselecteerd. Aangezien de dataset voornamelijk niet-gelabelde data bevat, ligt de focus op unsupervised anomaliedetectietechnieken.
 
 Mogelijke modellen die onderzocht worden zijn onder andere Isolation Forest, Local Outlier Factor (LOF), One-Class SVM en autoencoders. De selectie gebeurt op basis van volgende criteria:
 - Geschiktheid voor niet-gelabelde data  
@@ -78,7 +105,8 @@ Na een vergelijkende analyse wordt één primair model geselecteerd voor impleme
 \subsection{proof-of-concept}
 \label{subsec:Poc}
 % Implementeren van de gekozen ML modellen uit de vorige stap en het evalueren van de performantie en het aantal false positives. En onderzoeken hoe het model optimaal geimplementeerd kan worden met het security platform van Evolane dus doorsturen van alerts naar slack en het ontwikkelen van een eenvoudig dashboard voor visualisatie. 
-Om de theoretische inzichten te toetsen wordt er een Proof of Concept uitgewerkt waarin een anomaliedetectiemethode wordt geïmplementeerd. De detectieperformantie wordt geëvalueerd door middel van de F1 score voor het model te bepalen. Deze metric geeft ons de balans tussen het correct detecteren van de anomalieën en het vermijden van foutieve detecties. Om de F1 score te kunnen berekenen bepalen we eerst de precision en recall van het model. Om het gebruik van het Proof-of-Concept verder te kunnen staven berekenen we ook de false positive ratio (FPR). Dit is essentieel voor het bepalen in welke mate het prototype het aantal false positives kan verminderen ten opzichte van de huidige rule-based detectiebenadering binnen Evolane. Naast de technische evaluatie wordt er ook gekeken naar de operationele integratie. Hierbij onderzoeken we hoe het prototype gekoppeld kan worden aan het security platform van Evolane, en hoe we de alerts kunnen doorsturen naar het ticketsysteem Slack. Hiernaast wordt er ook een eenvoudig interface of dashboard voorzien Grafana voor het visualiseren van de anomalieën.  
+Om de theoretische inzichten te toetsen wordt er een Proof of Concept uitgewerkt waarin een anomaliedetectiemethode wordt geïmplementeerd. De detectieperformantie wordt geëvalueerd aan de hand van precision en false positive ratio. Precision geeft aan welk aandeel van de als anomalie geclassificeerde datapunten daadwerkelijk afwijkend gedrag vertoont. De false positive ratio is essentieel voor het bepalen in welke mate het prototype het aantal foutieve detecties kan beperken. Daarnaast wordt een handmatige validatie uitgevoerd door een security-analist om de kwaliteit van de detecties inhoudelijk te beoordelen.
+Naast de technische evaluatie wordt ook de operationele integratie onderzocht. Hierbij wordt nagegaan hoe het prototype gekoppeld kan worden aan de bestaande monitoring van Evolane. De detectieresultaten worden ontsloten via een API en gevisualiseerd in een Grafana-dashboard, zodat het SOC-team de gedetecteerde anomalieën kan inspecteren.
 
 \subsection{Conclusie en advies}
 \label{subsec:conclusie en advies}

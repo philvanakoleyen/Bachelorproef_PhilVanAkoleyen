@@ -15,16 +15,55 @@
 \usepackage{tabularx}
 \usepackage{float}    % voeg dit toe aan je preamble
 \usepackage{booktabs} % als je dit nog niet hebt
-%% Pictures to include in the text can be put in the graphics/ folder
-\graphicspath{{../graphics/}}
+\usepackage[chapter]{minted}
+\usemintedstyle{solarized-light}
 
+%% Formatting for minted environments.
+\setminted{%
+    autogobble,
+    frame=lines,
+    breaklines,
+    linenos,
+    tabsize=4
+}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstdefinestyle{custompython}{
+  language=Python,
+  basicstyle=\ttfamily\small\color{black},
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  captionpos=b,
+  numbers=left,
+  numberstyle=\tiny,
+}
+
+\definecolor{Rood}{HTML}{E74C3C}
+\definecolor{Blauw}{HTML}{3498DB}
+\definecolor{Groen}{HTML}{2ECC71}
+\definecolor{Oranje}{HTML}{F39C12}
+\definecolor{Paars}{HTML}{9B59B6}
+\definecolor{Roos}{HTML}{E91E63}
+\definecolor{Lime}{HTML}{CDDC39}
+\definecolor{Grijs}{HTML}{95A5A6}
+\definecolor{Geel}{HTML}{F1C40F}
+\definecolor{HogentOranje}{HTML}{EF8767}
+\definecolor{HogentLichtOranje}{HTML}{F8CCA2}
+\definecolor{HogentBlauw}{HTML}{0000FF}
+\definecolor{HogentLichtBlauw}{HTML}{A4C8F0}
 %% For source code highlighting, requires pygments to be installed
 %% Compile with the -shell-escape flag!
 %% \usepackage[chapter]{minted}
 %% If you compile with the make_thesis.{bat,sh} script, use the following
 %% import instead:
 \usepackage[chapter,outputdir=../output]{minted}
-\usemintedstyle{solarized-light}
+\usemintedstyle{friendly}
 
 %% Formatting for minted environments.
 \setminted{%
@@ -47,7 +86,11 @@
     \listof{listing}{\listoflistingscaption}%
 }
 
+\usepackage[utf8]{inputenc}
+\usepackage{glossaries}
 % Other packages not already included can be imported here
+% \makeglossaries
+
 
 %%---------- Document metadata -------------------------------------------------
 % TODO: Replace this with your own information
@@ -61,6 +104,7 @@
 \degreesought{\IfLanguageName{dutch}{Professionele bachelor in de toegepaste informatica}{Bachelor of applied computer science}}
 \partialthesis{false} %% To display 'in partial fulfilment'
 %\institution{Internshipcompany BVBA.}
+
 
 %% Add global exceptions to the hyphenation here
 \hyphenation{back-slash}
